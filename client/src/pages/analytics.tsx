@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Shield, Zap, Layers, DollarSign, Info } from "lucide-react";
-import { DonationButton, DonationBanner } from "@/components/DonationButton";
-import { FloatingDonateButton } from "@/components/FloatingDonateButton";
 import {
   BarChart,
   Bar,
@@ -302,10 +300,6 @@ export default function Analytics() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="mb-6">
-          <DonationBanner />
         </div>
 
         {isLoading ? (
@@ -694,10 +688,15 @@ export default function Analytics() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg mb-1">Enjoying these insights?</h3>
                     <p className="text-sm text-muted-foreground">
-                      Help us keep the analytics free and updated. Every contribution helps!
+                      Get live, personalized yield guidance from Alpha Brain — unlimited with Pro.
                     </p>
                   </div>
-                  <DonationButton variant="floating" />
+                  <Link href="/">
+                    <Button variant="default" className="gap-2">
+                      <Zap className="h-4 w-4" />
+                      Ask Alpha Brain
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -750,13 +749,8 @@ export default function Analytics() {
               </a>
             </div>
           </div>
-          <div className="flex items-center justify-center">
-            <DonationButton variant="inline" />
-          </div>
         </div>
       </footer>
-
-      <FloatingDonateButton />
     </div>
   );
 }

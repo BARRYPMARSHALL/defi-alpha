@@ -1,8 +1,7 @@
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Home, Heart, Coffee } from "lucide-react";
-import { DonationButton } from "@/components/DonationButton";
+import { AlertCircle, Home, Brain } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -26,13 +25,12 @@ export default function NotFound() {
           </Link>
 
           <div className="pt-4 border-t">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-pink-500/10 to-orange-500/10 border border-pink-500/20">
-              <Coffee className="h-5 w-5 text-pink-400 shrink-0" />
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <Brain className="h-5 w-5 text-primary shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Lost but not forgotten!</p>
-                <p className="text-xs text-muted-foreground">Help keep us online with a coffee</p>
+                <p className="text-sm font-medium">Not sure where to start?</p>
+                <p className="text-xs text-muted-foreground">Ask Alpha Brain to find the best yields for you</p>
               </div>
-              <DonationButton variant="compact" />
             </div>
           </div>
         </CardContent>

@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { ArrowLeft, Coins, Shield, ExternalLink, Search } from "lucide-react";
+import { Coins, Shield, ExternalLink, Search } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,17 +77,9 @@ export default function Stablecoins() {
       <Header onRefresh={() => refetch()} isRefreshing={isFetching} />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        <div className="flex items-center gap-3">
-          <Link href="/">
-            <Button variant="ghost" size="sm" data-testid="button-back-stablecoins">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Coins className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Stablecoin Yield Leaderboard</h1>
-          </div>
+        <div className="flex items-center gap-2">
+          <Coins className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Stablecoin Yield Leaderboard</h1>
         </div>
 
         <p className="text-muted-foreground max-w-3xl">

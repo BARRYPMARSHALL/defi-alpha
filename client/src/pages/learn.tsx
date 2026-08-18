@@ -1,12 +1,10 @@
 import { Link } from "wouter";
-import { ArrowLeft, TrendingUp, Shield, Zap, Calculator, BookOpen, Trophy, Share2, Gift, ExternalLink } from "lucide-react";
+import { ArrowLeft, TrendingUp, Shield, Zap, Calculator, BookOpen, Trophy, Share2, Gift, ExternalLink, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Header } from "@/components/Header";
+import { Card, CardContent } from "@/components/ui/card";
 import { CourseModule, CourseProgress } from "@/components/CourseModule";
-import { NexoBanner } from "@/components/NexoBanner";
-import { DonationButton, DonationBanner } from "@/components/DonationButton";
-import { FloatingDonateButton } from "@/components/FloatingDonateButton";
 import { SiX, SiFacebook, SiReddit, SiTelegram } from "react-icons/si";
 import { FaLinkedin } from "react-icons/fa";
 import logoImage from "@assets/33_1775959909661.png";
@@ -15,74 +13,7 @@ import heroBanner from "@assets/x1_1768343977535.png";
 export default function Learn() {
   return (
     <div className="min-h-screen bg-background pb-24 sm:pb-0">
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        {/* Desktop Layout */}
-        <div className="hidden sm:flex max-w-7xl mx-auto px-4 h-16 items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/">
-              <Button variant="ghost" size="sm" data-testid="button-back-dashboard">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-          </div>
-          <Link href="/">
-            <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
-              <img 
-                src={logoImage} 
-                alt="DeFi Alpha Agent" 
-                className="w-10 h-10 rounded-md object-cover"
-                data-testid="img-logo-learn"
-              />
-              <div className="flex flex-col">
-                <h1 className="text-xl font-bold tracking-tight" data-testid="text-learn-title">
-                  Free DeFi Course
-                </h1>
-                <span className="text-xs text-muted-foreground">Master yield farming in 30 minutes</span>
-              </div>
-            </div>
-          </Link>
-          <div className="flex items-center gap-2">
-            <DonationButton variant="compact" />
-            <ThemeToggle />
-          </div>
-        </div>
-
-        {/* Mobile Layout - Two Rows */}
-        <div className="sm:hidden max-w-7xl mx-auto px-3">
-          {/* Row 1: Logo + Title + Theme Toggle */}
-          <div className="flex items-center justify-between py-2 border-b border-border/50">
-            <Link href="/">
-              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                <img 
-                  src={logoImage} 
-                  alt="DeFi Alpha Agent" 
-                  className="w-8 h-8 rounded-md object-cover"
-                  data-testid="img-logo-learn-mobile"
-                />
-                <div className="flex flex-col">
-                  <h1 className="text-base font-bold tracking-tight" data-testid="text-learn-title-mobile">
-                    Free DeFi Course
-                  </h1>
-                  <span className="text-[10px] text-muted-foreground">Master yield farming</span>
-                </div>
-              </div>
-            </Link>
-            <ThemeToggle />
-          </div>
-
-          {/* Row 2: Back + Donate */}
-          <div className="flex items-center justify-between py-2">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" data-testid="button-back-dashboard-mobile">
-                <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-                Back to Dashboard
-              </Button>
-            </Link>
-            <DonationButton variant="compact" />
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="relative overflow-hidden rounded-xl mb-8" data-testid="hero-banner-learn">
@@ -511,9 +442,6 @@ export default function Learn() {
                 <li><strong>No impermanent loss</strong> - Just deposit and earn</li>
                 <li><strong>Fiat on/off ramps</strong> - Easy to move money in and out</li>
               </ul>
-              <div className="mt-8">
-                <NexoBanner variant="featured" storageKey="learn-nexo-5" />
-              </div>
             </CourseModule>
 
             <CourseModule
@@ -703,9 +631,14 @@ export default function Learn() {
                     </span>
                   </h4>
                   <p className="text-sm text-muted-foreground mb-3">
-                    You now have the knowledge to navigate DeFi safely. If this free course helped you, consider supporting its creator!
+                    You now have the knowledge to navigate DeFi safely. Take the next step — get live AI guidance on the safest yields.
                   </p>
-                  <DonationButton variant="floating" />
+                  <Link href="/">
+                    <Button variant="default" className="gap-2">
+                      <Crown className="h-4 w-4" />
+                      Explore live yields with Alpha Brain
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -719,10 +652,6 @@ export default function Learn() {
           </div>
         </div>
       </main>
-
-      <section className="max-w-7xl mx-auto px-4 py-6">
-        <DonationBanner />
-      </section>
 
       <footer className="border-t mt-8">
         <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
@@ -755,16 +684,8 @@ export default function Learn() {
               </a>
             </div>
           </div>
-          <div className="flex items-center justify-center">
-            <DonationButton variant="inline" />
-          </div>
-          <p className="text-xs text-muted-foreground/70 text-center" data-testid="text-affiliate-disclaimer-learn">
-            Affiliate links – we may earn commission at no extra cost to you.
-          </p>
         </div>
       </footer>
-
-      <FloatingDonateButton />
     </div>
   );
 }

@@ -1,8 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
 import {
-  ArrowLeft,
   Briefcase,
   Shield,
   Scale,
@@ -205,17 +203,9 @@ export default function Portfolio() {
       <Header onRefresh={() => refetch()} isRefreshing={isFetching} />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        <div className="flex items-center gap-3">
-          <Link href="/">
-            <Button variant="ghost" size="sm" data-testid="button-back-portfolio">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Briefcase className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Portfolio Builder</h1>
-          </div>
+        <div className="flex items-center gap-2">
+          <Briefcase className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Portfolio Builder</h1>
         </div>
 
         <p className="text-muted-foreground max-w-3xl">
