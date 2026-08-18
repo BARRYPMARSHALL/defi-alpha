@@ -10,16 +10,19 @@ import { storage } from "../storage";
  * Two modes:
  *  1. LLM mode (default when OPENAI_API_KEY is set): streams the live pool
  *     dataset into a system prompt and lets the model reason over it.
+ *     OpenAI-compatible endpoints are supported — set OPENAI_BASE_URL to
+ *     point at DeepSeek (https://api.deepseek.com) or any compatible host.
  *  2. Fallback mode (no key): a rule-based local advisor that answers with
  *     real, current data from the cache so the feature never dead-ends.
  */
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "deepseek-chat";
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || "https://api.deepseek.com";
 
 function getClient(): OpenAI | null {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
-  return new OpenAI({ apiKey });
+  return new OpenAI({ apiKey, baseURL: OPENAI_BASE_URL });
 }
 
 export function isLlmConfigured(): boolean {
