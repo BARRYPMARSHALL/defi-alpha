@@ -41,15 +41,19 @@ export default function WatchlistPage() {
   // stay gone for this session even when the server sends them again.
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
+  // Fetch the EXACT starred pools by id — a starred pool shows up regardless
+  // of TVL or score. (The old approach filtered a top-N snapshot, which hid
+  // every pool under $5M TVL behind the API's default minTvl filter.)
   const { data, isLoading } = useQuery<PoolsResponse>({
-    queryKey: ["/api/pools", "watchlist"],
+    queryKey: ["/api/pools", "watchlist-ids", watchlist],
     queryFn: async () => {
-      const res = await fetch("/api/pools?sortField=riskAdjustedScore&sortDirection=desc", {
+      const res = await fetch(`/api/pools?ids=${encodeURIComponent(watchlist.join(","))}`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch pools");
       return res.json();
     },
+    enabled: watchlist.length > 0,
     staleTime: 2 * 60 * 1000,
   });
 
@@ -75,8 +79,8 @@ export default function WatchlistPage() {
     refetchInterval: 60_000,
   });
 
-  const allPools = data?.pools || [];
-  const watchedPools = allPools.filter((p) => watchlist.includes(p.pool));
+  // Server returns the pools in watchlist order
+  const watchedPools = data?.pools || [];
   const serverAlerts = alertData?.alerts || [];
   // Server alerts take precedence once present; session-dismissed ones are
   // filtered out. Local `alerts` is the offline/fallback source.
@@ -126,12 +130,15 @@ export default function WatchlistPage() {
           </section>
         )}
 
-        {/* Empty state */}
-        {!isLoading && watchedPools.length === 0 && (
+        {/* Empty state — only when the list itself is empty */}
+        {!isLoading && watchlist.length === 0 && (
           <Card className="p-10 text-center">
             <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-            <p className="text-muted-foreground text-lg mb-4">
+            <p className="text-muted-foreground text-lg mb-1">
               Your watchlist is empty
+            </p>
+            <p className="text-sm text-muted-foreground/70 mb-4">
+              Tap the ★ star on any pool on the Search tab to track it here.
             </p>
             <Button onClick={() => (window.location.href = "/")}>
               Browse pools to star
@@ -154,10 +161,10 @@ export default function WatchlistPage() {
           )
         ) : null}
 
-        {/* Starred pool IDs not in current results (still show count) */}
-        {watchlist.length > watchedPools.length && (
+        {/* Pools that no longer resolve (delisted from DeFiLlama) */}
+        {!isLoading && watchlist.length > watchedPools.length && (
           <p className="mt-4 text-xs text-muted-foreground">
-            {watchlist.length - watchedPools.length} starred pool(s) not in the current top results.
+            {watchlist.length - watchedPools.length} starred pool(s) no longer available.
           </p>
         )}
       </main>

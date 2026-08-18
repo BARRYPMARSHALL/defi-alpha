@@ -37,6 +37,12 @@ const queryParamsSchema = z.object({
       ["lp", "lending", "stable", "volatile"].includes(t)
     );
   }),
+  // Exact pool lookup by id (comma-separated) — used by the watchlist page so
+  // starred pools render regardless of TVL/sort. Overrides all other filters.
+  ids: z.string().optional().transform((val) => {
+    if (!val) return [];
+    return val.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 100);
+  }),
 });
 
 export function registerPoolsRoutes(app: Express) {
@@ -59,6 +65,23 @@ export function registerPoolsRoutes(app: Express) {
       }
 
       const params = parseResult.data;
+
+      // Exact-by-id lookup (watchlist): return the requested pools in the
+      // requested order, ignoring TVL/sort filters entirely.
+      if (params.ids.length > 0) {
+        const byId = new Map(cachedData.pools.map((p) => [p.pool, p]));
+        const pools = params.ids
+          .map((id) => byId.get(id))
+          .filter((p): p is NonNullable<typeof p> => Boolean(p));
+        const response: PoolsResponse = {
+          pools,
+          stats: cachedData.stats,
+          chains: cachedData.chains,
+          chainDistribution: cachedData.chainDistribution,
+          lastUpdated: cachedData.lastUpdated,
+        };
+        return res.json(response);
+      }
 
       const filters: FilterState = {
         minTvl: params.minTvl,

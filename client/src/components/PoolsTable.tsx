@@ -301,7 +301,8 @@ export function PoolsTable({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleWatch(pool.pool)}
-                    className="shrink-0"
+                    title={isWatched(pool.pool) ? "Remove from watchlist" : "Add to watchlist"}
+                    className="shrink-0 rounded-md border border-border p-1 -ml-1 hover:border-amber-500 hover:bg-amber-500/10 transition-colors"
                     aria-label={isWatched(pool.pool) ? "Remove from watchlist" : "Add to watchlist"}
                     data-testid={`button-star-${pool.pool.slice(0, 8)}`}
                   >
@@ -309,7 +310,7 @@ export function PoolsTable({
                       className={`h-3.5 w-3.5 transition-colors ${
                         isWatched(pool.pool)
                           ? "fill-yellow-400 text-yellow-400"
-                          : "text-muted-foreground/40 hover:text-yellow-400"
+                          : "text-muted-foreground hover:text-yellow-400"
                       }`}
                     />
                   </button>

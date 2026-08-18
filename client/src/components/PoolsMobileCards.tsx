@@ -82,7 +82,8 @@ export function PoolsMobileCards({ pools, isLoading }: PoolsMobileCardsProps) {
               </div>
               <button
                 onClick={() => toggleWatch(pool.pool)}
-                className="shrink-0 p-1 -mr-1"
+                title={watched ? "Remove from watchlist" : "Add to watchlist"}
+                className="shrink-0 p-1.5 -mr-1 rounded-lg border border-border hover:border-amber-500 hover:bg-amber-500/10 transition-colors"
                 aria-label={watched ? "Remove from watchlist" : "Add to watchlist"}
                 data-testid={`button-star-mobile-${pool.pool.slice(0, 8)}`}
               >

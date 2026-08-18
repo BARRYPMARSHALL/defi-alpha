@@ -145,6 +145,19 @@ describe("pools API", () => {
     const res = await request(app).get("/api/pools?sortField=bogus");
     expect(res.status).toBe(400);
   });
+
+  it("GET /api/pools?ids= returns exact pools in requested order, ignoring filters", async () => {
+    // Requested order must be preserved (c before a, even though default sort
+    // would put a first) and filter params are ignored for id lookups —
+    // this is what lets the watchlist show pools regardless of TVL.
+    const res = await request(app).get("/api/pools?ids=0x-pool-c,0x-pool-a&minTvl=100000000");
+    expect(res.status).toBe(200);
+    expect(res.body.pools.map((p: any) => p.pool)).toEqual(["0x-pool-c", "0x-pool-a"]);
+
+    const missing = await request(app).get("/api/pools?ids=0x-does-not-exist");
+    expect(missing.status).toBe(200);
+    expect(missing.body.pools).toEqual([]);
+  });
 });
 
 describe("chains API", () => {
