@@ -4,6 +4,24 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { createApp } from "../index";
 
+// Mock CoinGate SDK so checkout tests never hit the network.
+vi.mock("@coingate/coingate-sdk", () => {
+  const createOrder = vi.fn(async (data: any) => ({
+    id: 424242,
+    status: "new",
+    order_id: data.order_id,
+    price_amount: String(data.price_amount),
+    price_currency: data.price_currency,
+    payment_url: `https://pay.coingate.com/424242?token=${data.token}`,
+    token: data.token,
+  }));
+  return {
+    Client: class {
+      order = { createOrder };
+    },
+  };
+});
+
 // Fixture pool data shaped like DeFiLlama's /pools response
 const fixturePools = [
   {
@@ -390,5 +408,62 @@ describe("auth API", () => {
     const blocked = await agent.post("/api/chat").send({ message: "over the limit" });
     expect(blocked.status).toBe(429);
     expect(blocked.body.code).toBe("ai_limit_reached");
+  });
+});
+
+describe("checkout API (CoinGate)", () => {
+  it("requires authentication to create a checkout", async () => {
+    const res = await request(app)
+      .post("/api/checkout")
+      .send({ period: "monthly" });
+    expect(res.status).toBe(401);
+  });
+
+  it("creates a CoinGate order and returns a payment URL for a logged-in user", async () => {
+    process.env.COINGATE_API_KEY = "test-key";
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send({ username: "cguser", password: "supersecret123" });
+
+    const res = await agent
+      .post("/api/checkout")
+      .send({ period: "monthly" });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.paymentUrl).toContain("pay.coingate.com");
+    expect(res.body.price).toBe(12);
+  });
+
+  it("activates Pro via the payment webhook when status is paid and token matches", async () => {
+    process.env.COINGATE_API_KEY = "test-key";
+    const agent = request.agent(app);
+    const reg = await agent.post("/api/auth/register").send({ username: "cgpro", password: "supersecret123" });
+    const userId = reg.body.user.id;
+
+    const order = await agent.post("/api/checkout").send({ period: "annual" });
+    const orderId = order.body.orderId;
+
+    // Simulate CoinGate callback with a valid token — we need the same token
+    // the SDK used; the mock returns data.token which we set server-side as a
+    // UUID, so we extract it from the payment URL.
+    const token = decodeURIComponent(new URL(order.body.paymentUrl).searchParams.get("token") || "");
+
+    const webhook = await request(app)
+      .post("/api/checkout/webhook")
+      .send({ order_id: orderId, status: "paid", token });
+    expect(webhook.status).toBe(200);
+    expect(webhook.body.activated).toBe(true);
+
+    // The user is now Pro
+    const me = await agent.get("/api/auth/me");
+    expect(me.body.user.plan).toBe("pro");
+    expect(userId).toBeTruthy();
+  });
+
+  it("rejects webhooks with a mismatched token", async () => {
+    const res = await request(app)
+      .post("/api/checkout/webhook")
+      .send({ order_id: "da-nonexistent-123", status: "paid", token: "wrong" });
+    expect(res.status).toBe(200); // acknowledged, not activated
+    expect(res.body.success).toBe(false);
   });
 });

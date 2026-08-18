@@ -246,7 +246,7 @@ export function PoolsMobileCards({ pools, isLoading }: PoolsMobileCardsProps) {
                     href={
                       pool.isBeefy || pool.autoCompound
                         ? `https://app.beefy.com/#/?search=${encodeURIComponent(pool.symbol)}`
-                        : `https://zapper.xyz/explore?search=${encodeURIComponent(pool.symbol)}`
+                        : `https://defillama.com/yields/pool/${pool.pool}`
                     }
                     target="_blank"
                     rel="noopener noreferrer"
@@ -254,9 +254,9 @@ export function PoolsMobileCards({ pools, isLoading }: PoolsMobileCardsProps) {
                     {pool.isBeefy || pool.autoCompound ? (
                       <RefreshCw className="h-3.5 w-3.5 mr-1" />
                     ) : (
-                      <Zap className="h-3.5 w-3.5 mr-1" />
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" />
                     )}
-                    Zap In
+                    {pool.isBeefy || pool.autoCompound ? "Zap In" : "View Pool"}
                   </a>
                 </Button>
               )}

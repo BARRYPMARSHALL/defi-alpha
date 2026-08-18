@@ -116,10 +116,12 @@ export default function AuthPage() {
               <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
               Alpha Brain: 5 free AI messages per day
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Brain className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-              Pro ($12/mo): unlimited AI, real-time data, ad-free
-            </div>
+            <Link href="/checkout">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer">
+                <Brain className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                Pro ($12/mo): unlimited AI, real-time data, ad-free →
+              </div>
+            </Link>
           </div>
         </CardContent>
       </Card>

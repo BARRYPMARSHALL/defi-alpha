@@ -3,7 +3,7 @@ import { RefreshCw, Star, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
 import { AuthButton } from "./AuthButton";
-import { WalletButton } from "./WalletButton";
+import { SiteShareButton } from "./SiteShareButton";
 import logoImage from "@assets/33_1775959909661.png";
 
 interface HeaderProps {
@@ -74,7 +74,7 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated, rightSlot
             </Button>
           )}
 
-          <WalletButton />
+          <SiteShareButton compact />
           <AuthButton compact />
           <ThemeToggle />
         </div>
@@ -118,8 +118,8 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated, rightSlot
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
               </Button>
             )}
-            <WalletButton />
-            <AuthButton compact />
+            <SiteShareButton compact />
+          <AuthButton compact />
             <ThemeToggle />
           </div>
         </div>

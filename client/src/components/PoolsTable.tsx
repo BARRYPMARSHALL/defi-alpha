@@ -70,24 +70,6 @@ function getChainColor(chain: string): string {
   return colors[chain] || "bg-muted text-muted-foreground";
 }
 
-function getZapperUrl(pool: PoolWithScore): string {
-  const chainMap: Record<string, string> = {
-    "Ethereum": "ethereum",
-    "Arbitrum": "arbitrum",
-    "Optimism": "optimism",
-    "Polygon": "polygon",
-    "Base": "base",
-    "BSC": "binance-smart-chain",
-    "Avalanche": "avalanche",
-  };
-  
-  const zapperChain = chainMap[pool.chain];
-  if (zapperChain && pool.underlyingTokens?.[0]) {
-    return `https://zapper.xyz/token/${zapperChain}/${pool.underlyingTokens[0]}`;
-  }
-  return `https://zapper.xyz/explore?search=${encodeURIComponent(pool.symbol)}`;
-}
-
 const BEEFY_CHAIN_SLUGS: Record<string, string> = {
   "Ethereum": "ethereum",
   "Arbitrum": "arbitrum",
@@ -592,31 +574,7 @@ export function PoolsTable({
                         <p>Check Beefy vault for auto-compounding</p>
                       </TooltipContent>
                     </Tooltip>
-                  ) : (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                          data-testid={`button-zap-${pool.pool.slice(0, 8)}`}
-                        >
-                          <a
-                            href={getZapperUrl(pool)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="gap-1"
-                          >
-                            <Zap className="h-3 w-3" />
-                            <span className="hidden lg:inline">Zap</span>
-                          </a>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Zap In via Zapper</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+                  ) : null}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="sm" asChild data-testid={`button-add-${pool.pool.slice(0, 8)}`}>
