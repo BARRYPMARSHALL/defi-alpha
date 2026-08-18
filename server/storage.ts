@@ -9,6 +9,7 @@ import {
   type InsertWatchlistItem,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { DbStorage } from "./db-storage";
 
 export interface Lead {
   id: string;
@@ -172,4 +173,22 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+/**
+ * Storage selection: Postgres when DATABASE_URL is set (production/Railway),
+ * otherwise in-memory (local dev, tests). Static import (this file is ESM —
+ * "type":"module" — so require() would be undefined). No DB connection is
+ * opened until the first query, so the pg/drizzle code is inert without a
+ * DATABASE_URL.
+ */
+export function getStorage(): IStorage {
+  const url = process.env.DATABASE_URL;
+  if (url) {
+    // Static import: bundled into dist by esbuild; the pg/drizzle code is
+    // included in the server bundle (acceptable — it's used only when the
+    // app has a database, and the cost is a few hundred KB in the bundle).
+    return new DbStorage(url);
+  }
+  return new MemStorage();
+}
+
+export const storage: IStorage = getStorage();

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -58,7 +58,10 @@ export const watchlistItems = pgTable("watchlist_items", {
   token: text("token").notNull(),
   poolId: text("pool_id").notNull(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (t) => [
+  // Prevent duplicate (token, pool) rows under concurrency
+  uniqueIndex("watchlist_token_pool_unique").on(t.token, t.poolId),
+]);
 
 export const insertWatchlistItemSchema = createInsertSchema(watchlistItems).omit({
   id: true,
@@ -67,6 +70,22 @@ export const insertWatchlistItemSchema = createInsertSchema(watchlistItems).omit
 
 export type WatchlistItem = typeof watchlistItems.$inferSelect;
 export type InsertWatchlistItem = z.infer<typeof insertWatchlistItemSchema>;
+
+// Email leads from the course funnel (weekly digest subscribers)
+export const leads = pgTable("leads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  source: text("source").notNull().default("course"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertLeadSchema = createInsertSchema(leads).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Lead = typeof leads.$inferSelect;
+export type InsertLead = z.infer<typeof insertLeadSchema>;
 
 // DeFi Pool types from DeFiLlama API
 export interface Pool {

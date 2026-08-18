@@ -41,13 +41,23 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
   app.use(express.urlencoded({ extended: false }));
 
   // Session middleware — powers auth. Memory store is fine for single-instance
-  // self-hosting; swap to connect-pg-simple when running with DATABASE_URL.
+  // Session middleware — powers auth. In-memory store for local dev; when
+  // DATABASE_URL is set (production/Railway) sessions persist in Postgres
+  // via connect-pg-simple so logins survive restarts and redeploys.
+  const sessionStore = process.env.DATABASE_URL
+    ? new (await import("connect-pg-simple").then((m) => m.default(session)))({
+        conString: process.env.DATABASE_URL,
+        createTableIfMissing: true,
+      })
+    : undefined;
+
   app.use(
     session({
       name: "defi-alpha.sid",
       secret: process.env.SESSION_SECRET || "dev-only-change-me",
       resave: false,
       saveUninitialized: false,
+      store: sessionStore,
       cookie: {
         httpOnly: true,
         sameSite: "lax",
