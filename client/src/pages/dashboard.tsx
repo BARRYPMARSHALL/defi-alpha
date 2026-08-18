@@ -65,7 +65,8 @@ const QUICK_FILTERS: { key: string; label: string; apply: (f: FilterState) => Fi
   {
     key: "all",
     label: "All",
-    apply: (f) => ({ ...DEFAULT_FILTERS, searchQuery: f.searchQuery }),
+    // All = show everything: reset all filters AND clear any active search
+    apply: () => ({ ...DEFAULT_FILTERS, searchQuery: "" }),
   },
   {
     key: "stable",
