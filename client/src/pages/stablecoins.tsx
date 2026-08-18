@@ -74,7 +74,7 @@ export default function Stablecoins() {
   }, [stablePools]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 sm:pb-0">
       <Header onRefresh={() => refetch()} isRefreshing={isFetching} />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">

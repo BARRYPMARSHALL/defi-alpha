@@ -19,6 +19,8 @@ interface HeaderProps {
   onRefresh?: () => void;
   isRefreshing?: boolean;
   lastUpdated?: string | null;
+  /** Optional element rendered in the desktop header action row (e.g. AlertBell). */
+  rightSlot?: React.ReactNode;
 }
 
 const SHARE_TEXT = "I just discovered amazing DeFi yield opportunities on DeFi Alpha Agent - the smartest yield optimizer dashboard!";
@@ -142,7 +144,7 @@ function MobileMoreDropdown() {
   );
 }
 
-export function Header({ onRefresh, isRefreshing = false, lastUpdated }: HeaderProps) {
+export function Header({ onRefresh, isRefreshing = false, lastUpdated, rightSlot }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
       {/* Desktop Layout */}
@@ -215,6 +217,8 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated }: HeaderP
           
           <DonationButton variant="compact" />
           
+          {rightSlot}
+          
           {onRefresh && (
             <Button
               variant="outline"
@@ -232,21 +236,20 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated }: HeaderP
         </div>
       </div>
 
-      {/* Mobile Layout - Two Rows */}
+      {/* Mobile Layout - Single Row (navigation lives in the bottom tab bar) */}
       <div className="sm:hidden max-w-7xl mx-auto px-3">
-        {/* Row 1: Logo + Title + Theme Toggle */}
-        <div className="flex items-center justify-between py-2 border-b border-border/50">
+        <div className="flex items-center justify-between py-2">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" data-testid="link-home-mobile">
               <img 
                 src={logoImage} 
-                alt="DeFi Alpha Agent" 
+                alt="DeFi Alpha" 
                 className="w-8 h-8 rounded-md object-cover"
                 data-testid="img-logo-mobile"
               />
               <div className="flex flex-col">
                 <h1 className="text-base font-bold tracking-tight" data-testid="text-app-title-mobile">
-                  DeFi Alpha Agent
+                  DeFi Alpha
                 </h1>
                 {lastUpdated && (
                   <span className="text-[10px] text-muted-foreground" data-testid="text-last-updated-mobile">
@@ -256,39 +259,9 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated }: HeaderP
               </div>
             </div>
           </Link>
-          <ThemeToggle />
-        </div>
 
-        {/* Row 2: Nav + Actions */}
-        <div className="flex items-center justify-between py-2 gap-1">
           <div className="flex items-center gap-1">
-            <Link href="/portfolio">
-              <Button variant="outline" size="sm" className="h-8 px-2 text-xs" data-testid="button-portfolio-mobile">
-                <Briefcase className="h-3.5 w-3.5 mr-1" />
-                Build
-              </Button>
-            </Link>
-
-            <Link href="/stablecoins">
-              <Button variant="outline" size="sm" className="h-8 px-2 text-xs" data-testid="button-stables-mobile">
-                <Coins className="h-3.5 w-3.5 mr-1" />
-                Stables
-              </Button>
-            </Link>
-
-            <Link href="/learn">
-              <Button variant="outline" size="sm" className="h-8 px-2 text-xs" data-testid="button-learn-mobile">
-                <GraduationCap className="h-3.5 w-3.5 mr-1" />
-                Learn
-              </Button>
-            </Link>
-            
-            <MobileMoreDropdown />
-          </div>
-
-          <div className="flex items-center gap-0.5">
-            <DonationButton variant="compact" />
-            
+            {rightSlot}
             {onRefresh && (
               <Button
                 variant="ghost"
@@ -301,6 +274,7 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated }: HeaderP
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
               </Button>
             )}
+            <ThemeToggle />
           </div>
         </div>
       </div>

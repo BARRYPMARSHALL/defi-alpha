@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Brain, Send, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Brain, Send, Loader2, Sparkles, AlertCircle, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,12 @@ import { Badge } from "@/components/ui/badge";
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+}
+
+interface UsageInfo {
+  used: number;
+  limit: number;
+  isPro: boolean;
 }
 
 const SUGGESTIONS = [
@@ -24,13 +30,18 @@ export function AlphaBrainPanel() {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"llm" | "local" | "checking">("checking");
   const [error, setError] = useState<string | null>(null);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
+  const [limitHit, setLimitHit] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const conversationIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     fetch("/api/chat/status")
       .then((r) => r.json())
-      .then((data) => setMode(data.mode))
+      .then((data) => {
+        setMode(data.mode);
+        if (data.usage) setUsage(data.usage);
+      })
       .catch(() => setMode("local"));
   }, []);
 
@@ -58,10 +69,15 @@ export function AlphaBrainPanel() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
+        if (data.code === "ai_limit_reached") {
+          setLimitHit(true);
+          setUsage(data.usage);
+        }
         throw new Error(data.error || "Failed to get a reply");
       }
       conversationIdRef.current = data.conversationId;
       setMode(data.mode);
+      if (data.usage) setUsage(data.usage);
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
     } catch (e: any) {
       setError(e.message || "Something went wrong");
@@ -69,6 +85,8 @@ export function AlphaBrainPanel() {
       setLoading(false);
     }
   }
+
+  const remaining = usage ? Math.max(0, usage.limit - usage.used) : null;
 
   return (
     <Card className="w-full">
@@ -129,7 +147,21 @@ export function AlphaBrainPanel() {
           )}
         </ScrollArea>
 
-        {error && (
+        {limitHit && (
+          <div className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+            <p className="flex items-center gap-1 font-medium text-amber-500">
+              <Crown className="h-4 w-4" /> Free limit reached
+            </p>
+            <p className="text-muted-foreground mt-1">
+              You've used your free AI messages for today. Upgrade to Pro for unlimited Alpha Brain.
+            </p>
+            <Button size="sm" className="mt-2 w-full" variant="default">
+              <Crown className="h-3.5 w-3.5 mr-1" /> Go Pro — $12/mo
+            </Button>
+          </div>
+        )}
+
+        {error && !limitHit && (
           <p className="mt-2 flex items-center gap-1 text-xs text-destructive">
             <AlertCircle className="h-3 w-3" /> {error}
           </p>
@@ -153,6 +185,14 @@ export function AlphaBrainPanel() {
             <Send className="h-4 w-4" />
           </Button>
         </div>
+
+        {usage && !usage.isPro && remaining !== null && (
+          <p className="mt-2 text-center text-[11px] text-muted-foreground">
+            {remaining > 0
+              ? `${remaining} free AI ${remaining === 1 ? "message" : "messages"} left today`
+              : "Free AI limit reached today"}
+          </p>
+        )}
       </CardContent>
     </Card>
   );

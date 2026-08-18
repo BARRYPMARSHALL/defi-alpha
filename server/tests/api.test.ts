@@ -192,6 +192,45 @@ describe("chat API (Alpha Brain, local mode)", () => {
     expect(history.status).toBe(200);
     expect(history.body.messages.length).toBe(4); // 2 user + 2 assistant
   });
+
+  it("enforces the free-tier daily AI message limit", async () => {
+    // Distinct usage token → independent daily budget (default limit is 5)
+    const token = `limit-test-${Date.now()}`;
+    for (let i = 0; i < 5; i++) {
+      const res = await request(app)
+        .post("/api/chat")
+        .set("x-usage-token", token)
+        .send({ message: `test message ${i}` });
+      expect(res.status).toBe(200);
+    }
+    // 6th message hits the cap
+    const blocked = await request(app)
+      .post("/api/chat")
+      .set("x-usage-token", token)
+      .send({ message: "one too many" });
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.code).toBe("ai_limit_reached");
+    expect(blocked.body.usage.used).toBe(5);
+    expect(blocked.body.usage.limit).toBe(5);
+  });
+
+  it("reports usage in status and bypasses the limit for Pro", async () => {
+    const token = `pro-test-${Date.now()}`;
+    const status = await request(app)
+      .get("/api/chat/status")
+      .set("x-usage-token", token);
+    expect(status.body.usage).toMatchObject({ used: 0, limit: 5, isPro: false });
+
+    // Pro header skips the gate even beyond the cap
+    for (let i = 0; i < 6; i++) {
+      const res = await request(app)
+        .post("/api/chat")
+        .set("x-usage-token", token)
+        .set("x-plan", "pro")
+        .send({ message: `pro message ${i}` });
+      expect(res.status).toBe(200);
+    }
+  });
 });
 
 describe("watchlist API", () => {
@@ -216,6 +255,30 @@ describe("watchlist API", () => {
       .set("x-watchlist-token", "test-token-1");
     expect(del.status).toBe(200);
     expect(del.body.watchlist).not.toContain("0x-pool-a");
+  });
+
+  it("computes APY-change alerts for watched pools", async () => {
+    const token = `alert-test-${Date.now()}`;
+    await request(app)
+      .post("/api/watchlist")
+      .set("x-watchlist-token", token)
+      .send({ poolId: "0x-pool-a" });
+
+    // First poll baselines without alerting
+    const first = await request(app)
+      .get("/api/watchlist/alerts")
+      .set("x-watchlist-token", token);
+    expect(first.status).toBe(200);
+    expect(first.body.alerts.length).toBe(0);
+
+    // Second poll with the same fixture data: pool a APY is 12 (stable),
+    // no change → no alerts; pool b wasn't watched → no alert
+    const second = await request(app)
+      .get("/api/watchlist/alerts")
+      .set("x-watchlist-token", token);
+    expect(second.status).toBe(200);
+    expect(Array.isArray(second.body.alerts)).toBe(true);
+    expect(second.body.baseline["0x-pool-a"]).toBeDefined();
   });
 });
 

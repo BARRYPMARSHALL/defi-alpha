@@ -123,6 +123,24 @@ export function PoolsMobileCards({ pools, isLoading }: PoolsMobileCardsProps) {
               </div>
             </div>
 
+            {/* APY transparency: base vs reward split — blended APY hides this */}
+            {(pool.apyBase !== null || pool.apyReward !== null) && (
+              <div className="mb-3 rounded-md bg-muted/40 px-2.5 py-1.5 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Base APY</span>
+                  <span className="font-mono font-medium">
+                    {(pool.apyBase ?? 0).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-0.5">
+                  <span className="text-muted-foreground">Reward APY</span>
+                  <span className="font-mono font-medium">
+                    {(pool.apyReward ?? 0).toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-1.5 mb-3">
               <Badge
                 variant="outline"
@@ -155,6 +173,25 @@ export function PoolsMobileCards({ pools, isLoading }: PoolsMobileCardsProps) {
               >
                 Gas: {gas.level === "very-low" ? "Tiny" : gas.level === "low" ? "Low" : gas.level === "medium" ? "Med" : "High"}
               </Badge>
+              {/* Sustainability flags — the trust signals retail users ask for */}
+              {pool.apyDeclining && (
+                <Badge
+                  variant="outline"
+                  className="border-orange-500/40 text-orange-600 dark:text-orange-400"
+                  title="APY declining more than 20% over 7 days"
+                >
+                  ⚠ APY falling
+                </Badge>
+              )}
+              {pool.lowLiquidityRewards && (
+                <Badge
+                  variant="outline"
+                  className="border-destructive/40 text-destructive"
+                  title="Reward tokens may have low liquidity — selling them could move the price"
+                >
+                  ⚠ Low liq. rewards
+                </Badge>
+              )}
             </div>
 
             <div className="flex gap-2">

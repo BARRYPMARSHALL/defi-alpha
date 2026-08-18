@@ -14,7 +14,7 @@ import heroBanner from "@assets/x1_1768343977535.png";
 
 export default function Learn() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 sm:pb-0">
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         {/* Desktop Layout */}
         <div className="hidden sm:flex max-w-7xl mx-auto px-4 h-16 items-center justify-between gap-4">

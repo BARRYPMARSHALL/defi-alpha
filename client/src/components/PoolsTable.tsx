@@ -376,9 +376,16 @@ export function PoolsTable({
                 {formatNumber(pool.tvlUsd)}
               </TableCell>
               <TableCell className="text-right">
-                <span className="font-mono font-semibold text-chart-2">
-                  {formatApy(pool.apy)}
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className="font-mono font-semibold text-chart-2">
+                    {formatApy(pool.apy)}
+                  </span>
+                  {(pool.apyBase !== null || pool.apyReward !== null) && (
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {formatApy(pool.apyBase ?? 0)} + {formatApy(pool.apyReward ?? 0)} rew
+                    </span>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="text-center">
                 <Sparkline

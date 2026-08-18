@@ -172,6 +172,13 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    /* Premium fintech: tabular numerals so APY/TVL columns never jitter */
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Numbers should use tabular figures everywhere by default */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 

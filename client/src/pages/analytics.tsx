@@ -235,7 +235,7 @@ export default function Analytics() {
   const autoCompoundCount = pools.filter((p) => p.autoCompound).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 sm:pb-0">
       <Header />
       
       <main className="container mx-auto px-4 py-6 max-w-7xl">
