@@ -29,6 +29,13 @@ function formatPercent(value: number): string {
   return `${value.toFixed(2)}%`;
 }
 
+/** Signed percentage change: "+5.00%" / "-3.10%" — never "+-5.00%". */
+function formatPercentChange(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}%`;
+}
+
 function calculateApyDistribution(pools: PoolWithScore[]) {
   const buckets = [
     { range: "0-5%", min: 0, max: 5, count: 0 },
@@ -447,7 +454,7 @@ export default function Analytics() {
                         <span className="text-muted-foreground" data-testid={`text-gainer-apy-${i}`}>{formatPercent(pool.apy)}</span>
                         <span className="text-green-500 font-medium flex items-center gap-1" data-testid={`text-gainer-change-${i}`}>
                           <TrendingUp className="h-3 w-3" />
-                          +{formatPercent(pool.apyPct7D || 0)}
+                          {formatPercentChange(pool.apyPct7D)}
                         </span>
                       </div>
                     </div>

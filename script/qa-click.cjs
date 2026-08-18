@@ -10,8 +10,14 @@ const WebSocket = require("ws");
 const URL = process.env.QA_URL || "http://127.0.0.1:5000/";
 const PORT = 9333;
 
+/** Pick a Chrome binary: QA_CHROME env → google-chrome → chromium. */
+function chromeBinary() {
+  const candidates = [process.env.QA_CHROME, "google-chrome", "chromium", "chromium-browser"].filter(Boolean);
+  return candidates[0];
+}
+
 function launchChrome() {
-  const chrome = spawn("google-chrome", [
+  const chrome = spawn(chromeBinary(), [
     "--headless=new",
     "--disable-gpu",
     "--no-sandbox",

@@ -21,9 +21,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-// Chat tables for Alpha Brain AI advisor
+// Chat tables for Alpha Brain AI advisor.
+// conversations.userId scopes history to the owning account (null for
+// anonymous chats, which are never listed back to anyone).
 export const conversations = pgTable("conversations", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id"),
   title: text("title").notNull(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -86,6 +89,19 @@ export const insertLeadSchema = createInsertSchema(leads).omit({
 
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
+
+// CoinGate orders awaiting confirmation — persisted so a redeploy or a
+// second instance never loses a payment callback (order_id -> user mapping).
+export const pendingOrders = pgTable("pending_orders", {
+  orderId: text("order_id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  plan: text("plan").notNull().default("pro"),
+  orderToken: text("order_token").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export type PendingOrder = typeof pendingOrders.$inferSelect;
+export type InsertPendingOrder = typeof pendingOrders.$inferInsert;
 
 // DeFi Pool types from DeFiLlama API
 export interface Pool {

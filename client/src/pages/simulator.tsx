@@ -72,8 +72,16 @@ export default function SimulatorPage() {
     if (allocations.some((a) => a.poolId === poolKey(pool))) return;
     const currentTotal = allocations.reduce((s, a) => s + a.weight, 0);
     const remaining = 100 - currentTotal;
+    // Never exceed 100%: if nothing is left, don't add (the row would be 0%).
+    if (remaining <= 0) {
+      toast({
+        title: "Allocation full",
+        description: "Weights already total 100% — adjust an existing pool first.",
+      });
+      return;
+    }
     // Even split of what's left, no forced minimum (never exceed 100%)
-    const weight = remaining > 0 ? Math.max(1, Math.min(remaining, Math.floor(remaining / (allocations.length + 1)))) : 1;
+    const weight = Math.max(1, Math.min(remaining, Math.floor(remaining / (allocations.length + 1))));
     setAllocations((prev) => [...prev, { poolId: poolKey(pool), weight }]);
   };
 
@@ -345,12 +353,12 @@ export default function SimulatorPage() {
                       {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
                       {copied ? "Copied!" : "Share result"}
                     </Button>
-                    <Link href="/checkout" className="flex-1">
-                      <Button size="sm" variant={isPro ? "outline" : "default"} className="w-full gap-1">
+                    <Button asChild size="sm" variant={isPro ? "outline" : "default"} className="flex-1 gap-1">
+                      <Link href="/checkout">
                         <Crown className="h-3.5 w-3.5" />
                         {isPro ? "Manage Pro" : "Unlock unlimited pools"}
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

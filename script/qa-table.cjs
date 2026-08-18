@@ -1,8 +1,15 @@
 const { spawn } = require("child_process");
 const WebSocket = require("ws");
 const PORT = 9335;
+
+/** Pick a Chrome binary: QA_CHROME env → google-chrome → chromium. */
+function chromeBinary() {
+  const candidates = [process.env.QA_CHROME, "google-chrome", "chromium", "chromium-browser"].filter(Boolean);
+  return candidates[0];
+}
+
 function launchChrome() {
-  return spawn("google-chrome", ["--headless=new","--disable-gpu","--no-sandbox",`--remote-debugging-port=${PORT}`,"--window-size=1440,900","about:blank"], { stdio: "ignore" });
+  return spawn(chromeBinary(), ["--headless=new","--disable-gpu","--no-sandbox",`--remote-debugging-port=${PORT}`,"--window-size=1440,900","about:blank"], { stdio: "ignore" });
 }
 async function waitForPage() {
   for (let i=0;i<60;i++){ try{ const r=await fetch(`http://127.0.0.1:${PORT}/json`); if(r.ok){const t=await r.json(); const p=t.find(x=>x.type==="page"); if(p) return p.webSocketDebuggerUrl;}}catch{} await new Promise(r=>setTimeout(r,200)); }
@@ -17,7 +24,7 @@ class CDP {
 async function main(){
   const chrome=launchChrome(); const url=await waitForPage(); const cdp=new CDP(url); await cdp.open();
   await cdp.send("Page.enable"); await cdp.send("Runtime.enable");
-  await cdp.send("Page.navigate",{url:process.env.QA_URL||"https://defi-alpha-production.up.railway.app/"});
+  await cdp.send("Page.navigate",{url:process.env.QA_URL||"http://127.0.0.1:5000/"});
   await new Promise(r=>setTimeout(r,8000));
   const m = await cdp.eval(`(() => {
     const table = document.querySelector('table');

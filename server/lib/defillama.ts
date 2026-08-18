@@ -51,76 +51,90 @@ export function invalidatePoolsCache(): void {
   lastFetchTime = 0;
 }
 
+// In-flight dedupe: concurrent first hits (e.g. chat + digest preview in the
+// same boot second) share ONE upstream fetch instead of stampeding DeFiLlama.
+let inflightFetch: Promise<void> | null = null;
+
 export async function fetchPoolsData(): Promise<void> {
   const now = Date.now();
   if (cachedData && now - lastFetchTime < CACHE_DURATION) {
     return;
   }
 
-  try {
-    console.log("Fetching pools from DeFiLlama...");
-    const response = await fetch("https://yields.llama.fi/pools");
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const json = await response.json();
-    const rawPools: any[] = json.data || [];
-
-    const poolsWithScore = scorePools(rawPools);
-    // Strip scoring enrichment to get the plain Pool list (keeps chain stats accurate)
-    const rawPoolsClean: Pool[] = poolsWithScore.map((scored) => {
-      const p: Pool = {
-        pool: scored.pool,
-        chain: scored.chain,
-        project: scored.project,
-        symbol: scored.symbol,
-        tvlUsd: scored.tvlUsd,
-        apyBase: scored.apyBase,
-        apyReward: scored.apyReward,
-        apy: scored.apy,
-        rewardTokens: scored.rewardTokens,
-        il7d: scored.il7d,
-        ilRisk: scored.ilRisk,
-        exposure: scored.exposure,
-        stablecoin: scored.stablecoin,
-        volumeUsd7d: scored.volumeUsd7d,
-        apyPct1D: scored.apyPct1D,
-        apyPct7D: scored.apyPct7D,
-        apyPct30D: scored.apyPct30D,
-        poolMeta: scored.poolMeta,
-        underlyingTokens: scored.underlyingTokens,
-        url: scored.url,
-      };
-      return p;
-    });
-
-    const { chains, chainDistribution, topChain, topChainTvl, avgApy } =
-      computeChainStats(rawPoolsClean);
-
-    cachedData = {
-      pools: poolsWithScore,
-      stats: {
-        totalPools: rawPoolsClean.length,
-        avgApy,
-        topChain,
-        topChainTvl,
-      },
-      chains,
-      chainDistribution,
-      lastUpdated: new Date().toISOString(),
-      rawPools: rawPoolsClean,
-    };
-
-    lastFetchTime = now;
-    console.log(`Fetched ${rawPoolsClean.length} pools from DeFiLlama`);
-  } catch (error) {
-    console.error("Failed to fetch pools:", error);
-    if (!cachedData) {
-      throw error;
-    }
+  if (inflightFetch) {
+    return inflightFetch;
   }
+
+  inflightFetch = (async () => {
+    try {
+      console.log("Fetching pools from DeFiLlama...");
+      const response = await fetch("https://yields.llama.fi/pools");
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const json = await response.json();
+      const rawPools: any[] = json.data || [];
+
+      const poolsWithScore = scorePools(rawPools);
+      // Strip scoring enrichment to get the plain Pool list (keeps chain stats accurate)
+      const rawPoolsClean: Pool[] = poolsWithScore.map((scored) => {
+        const p: Pool = {
+          pool: scored.pool,
+          chain: scored.chain,
+          project: scored.project,
+          symbol: scored.symbol,
+          tvlUsd: scored.tvlUsd,
+          apyBase: scored.apyBase,
+          apyReward: scored.apyReward,
+          apy: scored.apy,
+          rewardTokens: scored.rewardTokens,
+          il7d: scored.il7d,
+          ilRisk: scored.ilRisk,
+          exposure: scored.exposure,
+          stablecoin: scored.stablecoin,
+          volumeUsd7d: scored.volumeUsd7d,
+          apyPct1D: scored.apyPct1D,
+          apyPct7D: scored.apyPct7D,
+          apyPct30D: scored.apyPct30D,
+          poolMeta: scored.poolMeta,
+          underlyingTokens: scored.underlyingTokens,
+          url: scored.url,
+        };
+        return p;
+      });
+
+      const { chains, chainDistribution, topChain, topChainTvl, avgApy } =
+        computeChainStats(rawPoolsClean);
+
+      cachedData = {
+        pools: poolsWithScore,
+        stats: {
+          totalPools: rawPoolsClean.length,
+          avgApy,
+          topChain,
+          topChainTvl,
+        },
+        chains,
+        chainDistribution,
+        lastUpdated: new Date().toISOString(),
+        rawPools: rawPoolsClean,
+      };
+
+      lastFetchTime = Date.now();
+      console.log(`Fetched ${rawPoolsClean.length} pools from DeFiLlama`);
+    } catch (error) {
+      console.error("Failed to fetch pools:", error);
+      if (!cachedData) {
+        throw error;
+      }
+    } finally {
+      inflightFetch = null;
+    }
+  })();
+
+  return inflightFetch;
 }
 
 export async function getStablecoinsData(): Promise<{

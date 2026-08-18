@@ -6,7 +6,6 @@ import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourseModule, CourseProgress } from "@/components/CourseModule";
 import { EmailCapture } from "@/components/EmailCapture";
-import logoImage from "@assets/33_1775959909661.png";
 
 export default function Learn() {
   return (
@@ -542,12 +541,12 @@ export default function Learn() {
                   <h3 className="text-xl font-bold mb-1">Ready to Find Alpha?</h3>
                   <p className="text-muted-foreground">Apply what you learned and discover high-yield opportunities.</p>
                 </div>
-                <Link href="/">
-                  <Button size="lg" data-testid="button-go-to-dashboard">
+                <Button asChild size="lg" data-testid="button-go-to-dashboard">
+                  <Link href="/">
                     <TrendingUp className="h-5 w-5 mr-2" />
                     Go to Dashboard
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
 
@@ -565,12 +564,12 @@ export default function Learn() {
                   <p className="text-sm text-muted-foreground mb-3">
                     You now have the knowledge to navigate DeFi safely. Take the next step — get live AI guidance on the safest yields.
                   </p>
-                  <Link href="/">
-                    <Button variant="default" className="gap-2">
+                  <Button asChild variant="default" className="gap-2">
+                    <Link href="/">
                       <Crown className="h-4 w-4" />
                       Explore live yields with Alpha Brain
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </div>

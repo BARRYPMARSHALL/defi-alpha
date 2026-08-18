@@ -17,12 +17,12 @@ export default function NotFound() {
             Oops! Looks like this yield opportunity doesn't exist. Let's get you back to finding alpha.
           </p>
 
-          <Link href="/">
-            <Button className="w-full" data-testid="button-go-home">
+          <Button asChild className="w-full" data-testid="button-go-home">
+            <Link href="/">
               <Home className="h-4 w-4 mr-2" />
               Back to Dashboard
-            </Button>
-          </Link>
+            </Link>
+          </Button>
 
           <div className="pt-4 border-t">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">

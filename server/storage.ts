@@ -7,6 +7,8 @@ import {
   type InsertMessage,
   type WatchlistItem,
   type InsertWatchlistItem,
+  type PendingOrder,
+  type InsertPendingOrder,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DbStorage } from "./db-storage";
@@ -29,9 +31,9 @@ export interface IStorage {
   addLead(email: string, source: string): Promise<Lead | "duplicate">;
   listLeads(): Promise<Lead[]>;
 
-  // alpha brain conversations
-  createConversation(conversation: InsertConversation): Promise<Conversation>;
-  listConversations(): Promise<Conversation[]>;
+  // alpha brain conversations (userId scopes history to the owner; null = anonymous)
+  createConversation(conversation: InsertConversation, userId: string | null): Promise<Conversation>;
+  listConversations(userId: string): Promise<Conversation[]>;
   getConversation(id: number): Promise<Conversation | undefined>;
   addMessage(message: InsertMessage): Promise<Message>;
   listMessages(conversationId: number): Promise<Message[]>;
@@ -40,6 +42,12 @@ export interface IStorage {
   getWatchlist(token: string): Promise<string[]>;
   addWatchlistItem(item: InsertWatchlistItem): Promise<WatchlistItem>;
   removeWatchlistItem(token: string, poolId: string): Promise<boolean>;
+
+  // pending CoinGate orders (persisted so callbacks survive redeploys)
+  savePendingOrder(order: InsertPendingOrder): Promise<PendingOrder>;
+  getPendingOrder(orderId: string): Promise<PendingOrder | undefined>;
+  listPendingOrders(): Promise<PendingOrder[]>;
+  deletePendingOrder(orderId: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -48,6 +56,7 @@ export class MemStorage implements IStorage {
   private leads: Map<string, Lead>;
   private messages: Map<number, Message>;
   private watchlist: Map<string, string[]>;
+  private pendingOrders: Map<string, PendingOrder>;
   private nextConversationId: number;
   private nextMessageId: number;
   private nextWatchlistId: number;
@@ -58,6 +67,7 @@ export class MemStorage implements IStorage {
     this.messages = new Map();
     this.watchlist = new Map();
     this.leads = new Map();
+    this.pendingOrders = new Map();
     this.nextConversationId = 1;
     this.nextMessageId = 1;
     this.nextWatchlistId = 1;
@@ -102,9 +112,10 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  async createConversation(insert: InsertConversation): Promise<Conversation> {
+  async createConversation(insert: InsertConversation, userId: string | null): Promise<Conversation> {
     const conversation: Conversation = {
       id: this.nextConversationId++,
+      userId: userId ?? null,
       title: insert.title,
       createdAt: new Date(),
     };
@@ -112,10 +123,10 @@ export class MemStorage implements IStorage {
     return conversation;
   }
 
-  async listConversations(): Promise<Conversation[]> {
-    return Array.from(this.conversations.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-    );
+  async listConversations(userId: string): Promise<Conversation[]> {
+    return Array.from(this.conversations.values())
+      .filter((c) => c.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async getConversation(id: number): Promise<Conversation | undefined> {
@@ -170,6 +181,32 @@ export class MemStorage implements IStorage {
       this.watchlist.set(token, existing);
     }
     return true;
+  }
+
+  // ── pending CoinGate orders ──────────────────────────────────────────
+
+  async savePendingOrder(insert: InsertPendingOrder): Promise<PendingOrder> {
+    const order: PendingOrder = {
+      orderId: insert.orderId,
+      userId: insert.userId,
+      plan: insert.plan || "pro",
+      orderToken: insert.orderToken,
+      createdAt: insert.createdAt || new Date(),
+    };
+    this.pendingOrders.set(order.orderId, order);
+    return order;
+  }
+
+  async getPendingOrder(orderId: string): Promise<PendingOrder | undefined> {
+    return this.pendingOrders.get(orderId);
+  }
+
+  async listPendingOrders(): Promise<PendingOrder[]> {
+    return Array.from(this.pendingOrders.values());
+  }
+
+  async deletePendingOrder(orderId: string): Promise<boolean> {
+    return this.pendingOrders.delete(orderId);
   }
 }
 

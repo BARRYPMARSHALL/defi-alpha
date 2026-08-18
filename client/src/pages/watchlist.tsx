@@ -37,6 +37,9 @@ export default function WatchlistPage() {
   const { watchlist, toggleWatch, synced } = useWatchlist();
   const [sort, setSort] = useState<SortState>({ field: "apy", direction: "desc" });
   const [alerts, setAlerts] = useState<WatchAlert[]>([]);
+  // Dismissed alerts (by poolId) — survives refetches so dismissed alerts
+  // stay gone for this session even when the server sends them again.
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const { data, isLoading } = useQuery<PoolsResponse>({
     queryKey: ["/api/pools", "watchlist"],
@@ -51,7 +54,13 @@ export default function WatchlistPage() {
   });
 
   // Fetch alerts for the watchlist token
-  const token = typeof window !== "undefined" ? localStorage.getItem("defiAlphaWatchlistToken") || "" : "";
+  const token = (() => {
+    try {
+      return typeof window !== "undefined" ? localStorage.getItem("defiAlphaWatchlistToken") || "" : "";
+    } catch {
+      return "";
+    }
+  })();
   const { data: alertData } = useQuery<{ alerts: WatchAlert[] }>({
     queryKey: ["/api/watchlist/alerts", token],
     queryFn: async () => {
@@ -68,7 +77,17 @@ export default function WatchlistPage() {
 
   const allPools = data?.pools || [];
   const watchedPools = allPools.filter((p) => watchlist.includes(p.pool));
-  const currentAlerts = alertData?.alerts || alerts;
+  const serverAlerts = alertData?.alerts || [];
+  // Server alerts take precedence once present; session-dismissed ones are
+  // filtered out. Local `alerts` is the offline/fallback source.
+  const currentAlerts = (serverAlerts.length > 0 ? serverAlerts : alerts).filter(
+    (a) => !dismissed.has(a.poolId),
+  );
+
+  const dismissAlert = (poolId: string) => {
+    setAlerts((prev) => prev.filter((a) => a.poolId !== poolId));
+    setDismissed((prev) => new Set(prev).add(poolId));
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24 sm:pb-0">
@@ -87,8 +106,8 @@ export default function WatchlistPage() {
           <section className="mb-6">
             <h2 className="text-lg font-semibold mb-2">APY alerts</h2>
             <div className="space-y-2">
-              {currentAlerts.map((alert, i) => (
-                <Card key={`${alert.poolId}-${i}`}>
+              {currentAlerts.map((alert) => (
+                <Card key={alert.poolId}>
                   <CardContent className="flex items-center gap-3 p-3">
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${alert.direction === "up" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-destructive/15 text-destructive"}`}>
                       {alert.direction === "up" ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
@@ -97,7 +116,7 @@ export default function WatchlistPage() {
                       <p className="text-sm font-medium truncate">{alert.message}</p>
                       <p className="text-xs text-muted-foreground truncate">{alert.project} · {alert.chain}</p>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setAlerts((prev) => prev.filter((_, idx) => idx !== i))}>
+                    <Button variant="ghost" size="sm" onClick={() => dismissAlert(alert.poolId)}>
                       Dismiss
                     </Button>
                   </CardContent>

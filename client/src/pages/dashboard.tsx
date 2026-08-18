@@ -104,7 +104,13 @@ export default function Dashboard() {
   const [activeQuick, setActiveQuick] = useState("all");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [courseNudgeDismissed, setCourseNudgeDismissed] = useState(
-    () => localStorage.getItem("defiAlphaCourseNudgeDismissed") === "1",
+    () => {
+      try {
+        return localStorage.getItem("defiAlphaCourseNudgeDismissed") === "1";
+      } catch {
+        return false;
+      }
+    },
   );
 
   const buildQueryUrl = useCallback(() => {
@@ -305,40 +311,44 @@ export default function Dashboard() {
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-muted-foreground" />
             </div>
 
-            {/* Advanced filters: bottom sheet on mobile, inline on desktop */}
-            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9">
-                  <SlidersHorizontal className="h-4 w-4 mr-1" />
-                  Filters
-                  {activeFilterCount > 0 && (
-                    <Badge variant="default" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
-                      {activeFilterCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[85vh] overflow-y-auto pb-10 sm:hidden">
-                <SheetHeader className="mb-4">
-                  <SheetTitle>Advanced filters</SheetTitle>
-                </SheetHeader>
-                <FiltersBar
-                  filters={filters}
-                  sort={sort}
-                  availableChains={chains}
-                  onFiltersChange={handleFiltersChange}
-                  onSortChange={handleSortChange}
-                  onReset={() => {
-                    handleReset();
-                    setSheetOpen(false);
-                  }}
-                  resultCount={visiblePools.length}
-                />
-                <Button className="mt-4 w-full" onClick={() => setSheetOpen(false)}>
-                  Show {visiblePools.length} pools
-                </Button>
-              </SheetContent>
-            </Sheet>
+            {/* Advanced filters: bottom sheet on mobile, inline bar on desktop.
+                The trigger is mobile-only — on desktop the inline FiltersBar
+                (below) is the entry point, and a hidden sheet was dead UI. */}
+            <div className="sm:hidden">
+              <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9">
+                    <SlidersHorizontal className="h-4 w-4 mr-1" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <Badge variant="default" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[85vh] overflow-y-auto pb-10">
+                  <SheetHeader className="mb-4">
+                    <SheetTitle>Advanced filters</SheetTitle>
+                  </SheetHeader>
+                  <FiltersBar
+                    filters={filters}
+                    sort={sort}
+                    availableChains={chains}
+                    onFiltersChange={handleFiltersChange}
+                    onSortChange={handleSortChange}
+                    onReset={() => {
+                      handleReset();
+                      setSheetOpen(false);
+                    }}
+                    resultCount={visiblePools.length}
+                  />
+                  <Button className="mt-4 w-full" onClick={() => setSheetOpen(false)}>
+                    Show {visiblePools.length} pools
+                  </Button>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
 

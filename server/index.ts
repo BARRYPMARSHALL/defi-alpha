@@ -30,6 +30,12 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
   const app = express();
   const httpServer = createServer(app);
 
+  // Railway (and most PaaS) terminate TLS at a reverse proxy. Without this,
+  // req.ip is the LB address for every request — which broke anonymous AI
+  // usage caps (every anonymous visitor shared one 5-message budget).
+  // Trust exactly one hop: the platform's edge proxy.
+  app.set("trust proxy", 1);
+
   app.use(
     express.json({
       verify: (req, _res, buf) => {
@@ -50,6 +56,17 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
         createTableIfMissing: true,
       })
     : undefined;
+
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret && process.env.NODE_ENV === "production") {
+    // Warn loudly but still boot: Railway currently runs without this var and
+    // a hard fail would take the site down. Sessions reset on every restart
+    // until Barry sets it — a correctness issue, not a crash.
+    console.warn(
+      "[SESSION] WARNING: SESSION_SECRET is not set in production. " +
+        "Sessions will not survive restarts. Add SESSION_SECRET to Railway env vars.",
+    );
+  }
 
   app.use(
     session({
@@ -99,8 +116,13 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    if (res.headersSent) {
+      // Response already started — can't send again. Just log and move on.
+      console.error("[Error] headers already sent:", err);
+      return;
+    }
+
     res.status(status).json({ message });
-    throw err;
   });
 
   return { app, server: httpServer };

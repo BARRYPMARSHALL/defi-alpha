@@ -10,8 +10,9 @@ import { registerChatRoutes } from "./routes/chat";
 import { registerWatchlistRoutes } from "./routes/watchlist";
 import { registerHealthRoutes } from "./routes/health";
 import { registerAuthRoutes } from "./routes/auth";
-import { registerCheckoutRoutes } from "./routes/checkout";
+import { registerCheckoutRoutes, sweepPendingOrders } from "./routes/checkout";
 import { registerLeadsRoutes, registerDigestRoutes, registerEmailRoutes } from "./routes/leads";
+import { sweepRateLimitBuckets } from "./lib/rate-limit";
 
 /** Weekly digest job: sends every DIGEST_DAY (0=Sunday, default 0) at 09:00 UTC. */
 function startWeeklyDigestSchedule() {
@@ -68,6 +69,14 @@ export async function registerRoutes(
 
   // Weekly digest email (RESEND_API_KEY + window)
   startWeeklyDigestSchedule();
+
+  // Housekeeping: sweep stale pending CoinGate orders + rate-limit buckets
+  sweepPendingOrders().catch((error) => console.error("[Checkout] Initial order sweep failed:", error));
+  const housekeeping = setInterval(() => {
+    sweepPendingOrders().catch((error) => console.error("[Checkout] Order sweep failed:", error));
+    sweepRateLimitBuckets();
+  }, 60 * 60 * 1000);
+  housekeeping.unref();
 
   return httpServer;
 }

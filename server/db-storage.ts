@@ -7,6 +7,7 @@ import {
   messages,
   watchlistItems,
   leads,
+  pendingOrders,
   type User,
   type InsertUser,
   type Conversation,
@@ -16,6 +17,8 @@ import {
   type WatchlistItem,
   type InsertWatchlistItem,
   type Lead,
+  type PendingOrder,
+  type InsertPendingOrder,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -91,13 +94,20 @@ export class DbStorage implements IStorage {
 
   // ── conversations ────────────────────────────────────────────────────
 
-  async createConversation(insert: InsertConversation): Promise<Conversation> {
-    const rows = await this.db.insert(conversations).values(insert).returning();
+  async createConversation(insert: InsertConversation, userId: string | null): Promise<Conversation> {
+    const rows = await this.db
+      .insert(conversations)
+      .values({ ...insert, userId })
+      .returning();
     return rows[0];
   }
 
-  async listConversations(): Promise<Conversation[]> {
-    return this.db.select().from(conversations).orderBy(desc(conversations.createdAt));
+  async listConversations(userId: string): Promise<Conversation[]> {
+    return this.db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.userId, userId))
+      .orderBy(desc(conversations.createdAt));
   }
 
   async getConversation(id: number): Promise<Conversation | undefined> {
@@ -166,6 +176,45 @@ export class DbStorage implements IStorage {
       .delete(watchlistItems)
       .where(and(eq(watchlistItems.token, token), eq(watchlistItems.poolId, poolId)))
       .returning({ id: watchlistItems.id });
+    return rows.length > 0;
+  }
+
+  // ── pending CoinGate orders ──────────────────────────────────────────
+
+  async savePendingOrder(insert: InsertPendingOrder): Promise<PendingOrder> {
+    const rows = await this.db
+      .insert(pendingOrders)
+      .values({ ...insert, plan: insert.plan || "pro" })
+      .onConflictDoUpdate({
+        target: pendingOrders.orderId,
+        set: {
+          userId: insert.userId,
+          orderToken: insert.orderToken,
+          plan: insert.plan || "pro",
+        },
+      })
+      .returning();
+    return rows[0];
+  }
+
+  async getPendingOrder(orderId: string): Promise<PendingOrder | undefined> {
+    const rows = await this.db
+      .select()
+      .from(pendingOrders)
+      .where(eq(pendingOrders.orderId, orderId))
+      .limit(1);
+    return rows[0];
+  }
+
+  async listPendingOrders(): Promise<PendingOrder[]> {
+    return this.db.select().from(pendingOrders);
+  }
+
+  async deletePendingOrder(orderId: string): Promise<boolean> {
+    const rows = await this.db
+      .delete(pendingOrders)
+      .where(eq(pendingOrders.orderId, orderId))
+      .returning({ orderId: pendingOrders.orderId });
     return rows.length > 0;
   }
 }

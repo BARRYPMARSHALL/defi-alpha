@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Search, Star, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -28,7 +28,7 @@ export function MobileNav() {
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = location === href || (href !== "/" && location.startsWith(href));
           return (
-            <a
+            <Link
               key={href}
               href={href}
               className={cn(
@@ -38,7 +38,7 @@ export function MobileNav() {
             >
               <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
               {label}
-            </a>
+            </Link>
           );
         })}
       </div>

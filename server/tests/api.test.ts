@@ -4,6 +4,10 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { createApp } from "../index";
 
+// Owner-only endpoints (plan management, twitter post/schedule, digest send)
+// require this token via the x-admin-token header.
+process.env.ADMIN_TOKEN = "test-admin-token";
+
 // Mock CoinGate SDK so checkout tests never hit the network.
 vi.mock("@coingate/coingate-sdk", () => {
   const createOrder = vi.fn(async (data: any) => ({
@@ -212,42 +216,41 @@ describe("chat API (Alpha Brain, local mode)", () => {
   });
 
   it("enforces the free-tier daily AI message limit", async () => {
-    // Distinct usage token → independent daily budget (default limit is 5)
-    const token = `limit-test-${Date.now()}`;
+    // A cookie-carrying agent = one anonymous browser: the server issues an
+    // httpOnly anon token and keys usage to it (client-supplied headers no
+    // longer set the identity). Default limit is 5.
+    const agent = request.agent(app);
     for (let i = 0; i < 5; i++) {
-      const res = await request(app)
-        .post("/api/chat")
-        .set("x-usage-token", token)
-        .send({ message: `test message ${i}` });
+      const res = await agent.post("/api/chat").send({ message: `test message ${i}` });
       expect(res.status).toBe(200);
     }
     // 6th message hits the cap
-    const blocked = await request(app)
-      .post("/api/chat")
-      .set("x-usage-token", token)
-      .send({ message: "one too many" });
+    const blocked = await agent.post("/api/chat").send({ message: "one too many" });
     expect(blocked.status).toBe(429);
     expect(blocked.body.code).toBe("ai_limit_reached");
     expect(blocked.body.usage.used).toBe(5);
     expect(blocked.body.usage.limit).toBe(5);
   });
 
-  it("reports usage in status and bypasses the limit for Pro", async () => {
-    const token = `pro-test-${Date.now()}`;
-    const status = await request(app)
-      .get("/api/chat/status")
-      .set("x-usage-token", token);
+  it("reports usage in status and does NOT honor a spoofed pro header", async () => {
+    const agent = request.agent(app);
+    const status = await agent.get("/api/chat/status");
     expect(status.body.usage).toMatchObject({ used: 0, limit: 5, isPro: false });
 
-    // Pro header skips the gate even beyond the cap
-    for (let i = 0; i < 6; i++) {
-      const res = await request(app)
+    // The x-plan header is ignored: 5 messages then the cap, even with it set
+    for (let i = 0; i < 5; i++) {
+      const res = await agent
         .post("/api/chat")
-        .set("x-usage-token", token)
         .set("x-plan", "pro")
-        .send({ message: `pro message ${i}` });
+        .send({ message: `spoof attempt ${i}` });
       expect(res.status).toBe(200);
     }
+    const blocked = await agent
+      .post("/api/chat")
+      .set("x-plan", "pro")
+      .send({ message: "should still be blocked" });
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.code).toBe("ai_limit_reached");
   });
 });
 
@@ -380,10 +383,13 @@ describe("auth API", () => {
   });
 
   it("Pro users bypass the free AI message cap via their plan", async () => {
-    // Register + set plan to pro through the session
+    // Register + set plan to pro through the OWNER-ONLY plan endpoint
     const agent = request.agent(app);
-    await agent.post("/api/auth/register").send({ username: "prouser", password: "supersecret123" });
-    const plan = await agent.post("/api/auth/plan").send({ plan: "pro" });
+    const reg = await agent.post("/api/auth/register").send({ username: "prouser", password: "supersecret123" });
+    const plan = await agent
+      .post("/api/auth/plan")
+      .set("x-admin-token", "test-admin-token")
+      .send({ userId: reg.body.user.id, plan: "pro" });
     expect(plan.status).toBe(200);
     expect(plan.body.user.plan).toBe("pro");
 
@@ -395,6 +401,28 @@ describe("auth API", () => {
       expect(res.status).toBe(200);
       expect(res.body.usage.isPro).toBe(true);
     }
+  });
+
+  it("rejects plan changes without the admin token", async () => {
+    const agent = request.agent(app);
+    const reg = await agent.post("/api/auth/register").send({ username: "planhacker", password: "supersecret123" });
+
+    // No admin token → forbidden (no self-upgrade to Pro)
+    const noToken = await agent
+      .post("/api/auth/plan")
+      .send({ userId: reg.body.user.id, plan: "pro" });
+    expect(noToken.status).toBe(403);
+
+    // Wrong token → also forbidden
+    const wrongToken = await agent
+      .post("/api/auth/plan")
+      .set("x-admin-token", "wrong-token")
+      .send({ userId: reg.body.user.id, plan: "pro" });
+    expect(wrongToken.status).toBe(403);
+
+    // Still free
+    const me = await agent.get("/api/auth/me");
+    expect(me.body.user.plan).toBe("free");
   });
 
   it("authenticated free users still hit the AI cap", async () => {

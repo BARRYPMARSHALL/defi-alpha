@@ -116,8 +116,10 @@ export default function CheckoutPage() {
               </p>
             )}
 
-            {error && !configured && (
-              <p className="text-sm text-destructive mb-3">{error}</p>
+            {error && (
+              <p className="text-sm text-destructive mb-3" role="alert">
+                {error}
+              </p>
             )}
 
             <Button onClick={handleCheckout} disabled={loading || !configured} className="w-full h-11" size="lg">
@@ -137,11 +139,9 @@ export default function CheckoutPage() {
           </CardContent>
         </Card>
 
-        <Link href="/more">
-          <Button variant="ghost" className="w-full text-muted-foreground">
-            Maybe later
-          </Button>
-        </Link>
+        <Button asChild variant="ghost" className="w-full text-muted-foreground">
+          <Link href="/more">Maybe later</Link>
+        </Button>
       </main>
     </div>
   );

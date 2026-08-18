@@ -99,11 +99,16 @@ export function useWatchlist() {
         const token = getOrCreateToken();
         if (token) {
           const method = next.includes(poolId) ? "POST" : "DELETE";
-          void fetch(`/api/watchlist/${encodeURIComponent(poolId)}`, {
-            method,
-            headers: { "x-watchlist-token": token },
-            body: method === "POST" ? JSON.stringify({ token, poolId }) : undefined,
-          })
+          void fetch(
+            method === "POST"
+              ? "/api/watchlist"
+              : `/api/watchlist/${encodeURIComponent(poolId)}`,
+            {
+              method,
+              headers: { "x-watchlist-token": token, "Content-Type": "application/json" },
+              body: method === "POST" ? JSON.stringify({ token, poolId }) : undefined,
+            },
+          )
             .catch(() => {})
             .finally(() => {
               syncingRef.current = false;

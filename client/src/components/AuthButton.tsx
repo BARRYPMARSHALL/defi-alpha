@@ -21,12 +21,12 @@ export function AuthButton({ compact = false }: { compact?: boolean }) {
 
   if (!user) {
     return (
-      <Link href="/auth">
-        <Button variant="outline" size={compact ? "sm" : "default"} data-testid="button-signin">
+      <Button asChild variant="outline" size={compact ? "sm" : "default"} data-testid="button-signin">
+        <Link href="/auth">
           <LogIn className="h-4 w-4 mr-1" />
           {compact ? "" : "Sign in"}
-        </Button>
-      </Link>
+        </Link>
+      </Button>
     );
   }
 
