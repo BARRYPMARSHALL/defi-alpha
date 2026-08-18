@@ -222,7 +222,7 @@ export function PoolsTable({
 
   if (isLoading) {
     return (
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -267,19 +267,19 @@ export function PoolsTable({
   }
 
   return (
-    <div className="rounded-md border overflow-hidden">
-      <Table>
+    <div className="rounded-md border overflow-x-auto">
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow>
-            <HeaderWithTooltip tooltip="The blockchain network where this pool operates" className="w-[100px]">Chain</HeaderWithTooltip>
-            <HeaderWithTooltip tooltip="The DeFi protocol or platform running this pool">Project</HeaderWithTooltip>
-            <HeaderWithTooltip tooltip="The token pair or asset in this pool">Symbol</HeaderWithTooltip>
-            <SortableHeader field="tvlUsd" className="text-right" tooltip="Total Value Locked - the amount of money deposited in this pool. Higher TVL generally means more stability.">TVL</SortableHeader>
-            <SortableHeader field="apy" className="text-right" tooltip="Annual Percentage Yield - your expected yearly return if rates stay constant. Includes base yield plus rewards.">APY</SortableHeader>
-            <HeaderWithTooltip tooltip="APY trend over the past 30 days. Green means rising, red means falling." className="text-center">Trend</HeaderWithTooltip>
-            <HeaderWithTooltip tooltip="Impermanent Loss Risk - potential loss when token prices change. None for single assets, Low for stablecoins, Higher for volatile pairs.">IL Risk</HeaderWithTooltip>
-            <HeaderWithTooltip tooltip="Auto-compound pools automatically reinvest your rewards. Beefy vaults do this multiple times per day." className="text-center">Auto-Compound</HeaderWithTooltip>
-            <TableHead className="text-right">Actions</TableHead>
+            <HeaderWithTooltip tooltip="The blockchain network where this pool operates" className="w-[90px]">Chain</HeaderWithTooltip>
+            <HeaderWithTooltip tooltip="The DeFi protocol or platform running this pool" className="w-[130px]">Project</HeaderWithTooltip>
+            <HeaderWithTooltip tooltip="The token pair or asset in this pool" className="w-[150px]">Symbol</HeaderWithTooltip>
+            <SortableHeader field="tvlUsd" className="text-right w-[90px]" tooltip="Total Value Locked - the amount of money deposited in this pool. Higher TVL generally means more stability.">TVL</SortableHeader>
+            <SortableHeader field="apy" className="text-right w-[90px]" tooltip="Annual Percentage Yield - your expected yearly return if rates stay constant. Includes base yield plus rewards.">APY</SortableHeader>
+            <HeaderWithTooltip tooltip="APY trend over the past 30 days. Green means rising, red means falling." className="text-center w-[90px]">Trend</HeaderWithTooltip>
+            <HeaderWithTooltip tooltip="Impermanent Loss Risk - potential loss when token prices change. None for single assets, Low for stablecoins, Higher for volatile pairs." className="w-[95px]">IL Risk</HeaderWithTooltip>
+            <HeaderWithTooltip tooltip="Auto-compound pools automatically reinvest your rewards. Beefy vaults do this multiple times per day." className="text-center w-[105px]">Auto-Compound</HeaderWithTooltip>
+            <TableHead className="text-right w-[200px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -313,7 +313,7 @@ export function PoolsTable({
                       }`}
                     />
                   </button>
-                  <span className="truncate max-w-[140px]">{pool.project}</span>
+                  <span className="truncate max-w-[130px]">{pool.project}</span>
                   {pool.isHot && (
                     <Tooltip>
                       <TooltipTrigger>
@@ -464,10 +464,9 @@ export function PoolsTable({
                             href={pool.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="gap-1"
+                            className="gap-0.5 px-1.5"
                           >
-                            <Zap className="h-3 w-3" />
-                            <span className="hidden lg:inline">Invest</span>
+                            <Zap className="h-3.5 w-3.5" />
                           </a>
                         </Button>
                       </TooltipTrigger>
@@ -488,10 +487,9 @@ export function PoolsTable({
                           href={`https://defillama.com/yields/pool/${pool.pool}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="gap-1"
+                          className="gap-0.5 px-1.5"
                         >
-                          <ExternalLink className="h-3 w-3" />
-                          <span className="hidden lg:inline">View</span>
+                          <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       </Button>
                     </TooltipTrigger>
@@ -513,10 +511,9 @@ export function PoolsTable({
                             href={getBeefyUrl(pool)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="gap-1"
+                            className="gap-0.5 px-1.5"
                           >
-                            <RefreshCw className="h-3 w-3" />
-                            <span className="hidden lg:inline">Zap Beefy</span>
+                            <RefreshCw className="h-3.5 w-3.5" />
                           </a>
                         </Button>
                       </TooltipTrigger>
@@ -538,10 +535,9 @@ export function PoolsTable({
                             href={getAutoCompoundUrl(pool)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="gap-1"
+                            className="gap-0.5 px-1.5"
                           >
-                            <RefreshCw className="h-3 w-3" />
-                            <span className="hidden lg:inline">Zap In</span>
+                            <RefreshCw className="h-3.5 w-3.5" />
                           </a>
                         </Button>
                       </TooltipTrigger>
@@ -563,10 +559,9 @@ export function PoolsTable({
                             href={getBeefyUrl(pool)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="gap-1"
+                            className="gap-0.5 px-1.5"
                           >
-                            <RefreshCw className="h-3 w-3" />
-                            <span className="hidden lg:inline">Beefy</span>
+                            <RefreshCw className="h-3.5 w-3.5" />
                           </a>
                         </Button>
                       </TooltipTrigger>
