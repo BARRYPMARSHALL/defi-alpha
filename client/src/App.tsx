@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme-context";
 import { AuthProvider } from "@/hooks/use-auth";
 import { MobileNav } from "@/components/MobileNav";
+import { MobilePreview } from "@/components/MobilePreview";
 import Dashboard from "@/pages/dashboard";
 import WatchlistPage from "@/pages/watchlist";
 import MorePage from "@/pages/more";
@@ -16,6 +17,7 @@ import Stablecoins from "@/pages/stablecoins";
 import AuthPage from "@/pages/auth";
 import CheckoutPage from "@/pages/checkout";
 import LandingPage from "@/pages/landing";
+import SimulatorPage from "@/pages/simulator";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -31,6 +33,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/welcome" component={LandingPage} />
+      <Route path="/simulator" component={SimulatorPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -45,6 +48,7 @@ function App() {
             <Toaster />
             <Router />
             <MobileNav />
+            <MobilePreview />
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>

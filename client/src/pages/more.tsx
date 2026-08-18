@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Briefcase, Coins, BarChart3, GraduationCap, BookOpen, Wallet, ChevronRight, Crown, Sparkles } from "lucide-react";
+import { Briefcase, Coins, BarChart3, GraduationCap, BookOpen, Wallet, ChevronRight, Crown, Sparkles, Scale } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { AuthButton } from "@/components/AuthButton";
@@ -11,6 +11,12 @@ const ITEMS = [
     icon: Sparkles,
     title: "About DeFi Alpha",
     desc: "What this is, why it's different, and how to use it",
+  },
+  {
+    href: "/simulator",
+    icon: Scale,
+    title: "Portfolio Simulator",
+    desc: "What-if: build a simulated yield portfolio and see net APY",
   },
   {
     href: "/portfolio",

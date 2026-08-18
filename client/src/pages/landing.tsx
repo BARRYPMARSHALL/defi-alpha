@@ -13,6 +13,7 @@ import {
   Smartphone,
   ChartLine,
   GraduationCap,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,11 @@ const FEATURES = [
     icon: Zap,
     title: "One tap from pool to protocol",
     desc: "Direct links to the actual pool on DeFiLlama and the protocol — find it fast, invest fast.",
+  },
+  {
+    icon: Scale,
+    title: "Portfolio Simulator",
+    desc: "Build a what-if yield portfolio from live pools and see the net APY after gas and IL risk — before you commit a cent.",
   },
 ];
 
