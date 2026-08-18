@@ -43,9 +43,9 @@ export function EmailCapture({
         throw new Error(data.error || "Something went wrong");
       }
       setStatus("done");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus("error");
-      setError(err.message || "Something went wrong");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     }
   }
 
@@ -81,6 +81,7 @@ export function EmailCapture({
           className="flex-1 h-10"
           required
           autoComplete="email"
+          aria-label="Email address"
         />
         <Button type="submit" disabled={status === "submitting" || !email} className="h-10 shrink-0">
           {status === "submitting" ? (

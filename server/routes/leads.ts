@@ -41,3 +41,20 @@ export function registerLeadsRoutes(app: Express) {
     res.json({ success: true, count: leads.length });
   });
 }
+
+// Digest preview — lets the owner see what subscribers will receive.
+// (Sending is wired once an email provider key is configured.)
+export function registerDigestRoutes(app: Express) {
+  app.get("/api/digest/preview", async (_req, res) => {
+    try {
+      const { fetchPoolsData } = await import("../lib/defillama");
+      const { buildDigestFromCache } = await import("../lib/digest");
+      await fetchPoolsData();
+      const digest = buildDigestFromCache();
+      res.json({ success: true, subject: digest.subject, text: digest.text });
+    } catch (error) {
+      console.error("Error building digest:", error);
+      res.status(500).json({ success: false, error: "Failed to build digest" });
+    }
+  });
+}

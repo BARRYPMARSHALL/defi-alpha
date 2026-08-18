@@ -15,6 +15,7 @@ import Portfolio from "@/pages/portfolio";
 import Stablecoins from "@/pages/stablecoins";
 import AuthPage from "@/pages/auth";
 import CheckoutPage from "@/pages/checkout";
+import LandingPage from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/stablecoins" component={Stablecoins} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/welcome" component={LandingPage} />
       <Route component={NotFound} />
     </Switch>
   );

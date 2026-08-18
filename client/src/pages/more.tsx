@@ -1,12 +1,17 @@
 import { Link } from "wouter";
-import { Briefcase, Coins, BarChart3, GraduationCap, BookOpen, Wallet, ChevronRight, Crown } from "lucide-react";
+import { Briefcase, Coins, BarChart3, GraduationCap, BookOpen, Wallet, ChevronRight, Crown, Sparkles } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { AuthButton } from "@/components/AuthButton";
 import { useAuth } from "@/hooks/use-auth";
 
 const ITEMS = [
+  {
+    href: "/welcome",
+    icon: Sparkles,
+    title: "About DeFi Alpha",
+    desc: "What this is, why it's different, and how to use it",
+  },
   {
     href: "/portfolio",
     icon: Briefcase,
