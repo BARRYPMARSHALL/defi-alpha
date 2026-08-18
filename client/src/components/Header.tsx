@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
 import { ShareBar } from "./ShareBar";
 import { DonationButton } from "./DonationButton";
+import { AuthButton } from "./AuthButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -215,6 +216,8 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated, rightSlot
           
           <ShareBar compact />
           
+          <AuthButton compact />
+          
           <DonationButton variant="compact" />
           
           {rightSlot}
@@ -274,6 +277,7 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated, rightSlot
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
               </Button>
             )}
+            <AuthButton compact />
             <ThemeToggle />
           </div>
         </div>

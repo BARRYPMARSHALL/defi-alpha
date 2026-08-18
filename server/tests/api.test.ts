@@ -298,3 +298,97 @@ describe("twitter API", () => {
     expect(res.body).toHaveProperty("credentialsConfigured");
   });
 });
+
+describe("auth API", () => {
+  it("registers a user and returns a session", async () => {
+    const res = await request(app)
+      .post("/api/auth/register")
+      .send({ username: "testuser1", password: "supersecret123" });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.user.username).toBe("testuser1");
+    expect(res.body.user.plan).toBe("free");
+    expect(res.body.user.password).toBeUndefined(); // hash never exposed
+  });
+
+  it("rejects duplicate usernames", async () => {
+    await request(app)
+      .post("/api/auth/register")
+      .send({ username: "dupuser", password: "supersecret123" });
+    const dup = await request(app)
+      .post("/api/auth/register")
+      .send({ username: "dupuser", password: "otherpass123" });
+    expect(dup.status).toBe(409);
+  });
+
+  it("logs in with correct credentials and rejects wrong ones", async () => {
+    await request(app)
+      .post("/api/auth/register")
+      .send({ username: "loginuser", password: "supersecret123" });
+
+    const bad = await request(app)
+      .post("/api/auth/login")
+      .send({ username: "loginuser", password: "wrongpass" });
+    expect(bad.status).toBe(401);
+
+    const agent = request.agent(app); // cookie jar for session
+    const good = await agent
+      .post("/api/auth/login")
+      .send({ username: "loginuser", password: "supersecret123" });
+    expect(good.status).toBe(200);
+    expect(good.body.user.username).toBe("loginuser");
+
+    // /me reflects the session
+    const me = await agent.get("/api/auth/me");
+    expect(me.body.authenticated).toBe(true);
+    expect(me.body.user.username).toBe("loginuser");
+
+    // logout clears it
+    await agent.post("/api/auth/logout");
+    const meAfter = await agent.get("/api/auth/me");
+    expect(meAfter.body.authenticated).toBe(false);
+  });
+
+  it("rejects weak passwords and bad usernames", async () => {
+    const weak = await request(app)
+      .post("/api/auth/register")
+      .send({ username: "okuser", password: "short" });
+    expect(weak.status).toBe(400);
+
+    const badChars = await request(app)
+      .post("/api/auth/register")
+      .send({ username: "bad user!", password: "supersecret123" });
+    expect(badChars.status).toBe(400);
+  });
+
+  it("Pro users bypass the free AI message cap via their plan", async () => {
+    // Register + set plan to pro through the session
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send({ username: "prouser", password: "supersecret123" });
+    const plan = await agent.post("/api/auth/plan").send({ plan: "pro" });
+    expect(plan.status).toBe(200);
+    expect(plan.body.user.plan).toBe("pro");
+
+    // Send more than the free limit (5) — all should pass
+    for (let i = 0; i < 6; i++) {
+      const res = await agent
+        .post("/api/chat")
+        .send({ message: `pro chat ${i}` });
+      expect(res.status).toBe(200);
+      expect(res.body.usage.isPro).toBe(true);
+    }
+  });
+
+  it("authenticated free users still hit the AI cap", async () => {
+    const agent = request.agent(app);
+    await agent.post("/api/auth/register").send({ username: "freeuser", password: "supersecret123" });
+
+    for (let i = 0; i < 5; i++) {
+      const res = await agent.post("/api/chat").send({ message: `free chat ${i}` });
+      expect(res.status).toBe(200);
+    }
+    const blocked = await agent.post("/api/chat").send({ message: "over the limit" });
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.code).toBe("ai_limit_reached");
+  });
+});

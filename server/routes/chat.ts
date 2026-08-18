@@ -12,19 +12,33 @@ const chatSchema = z.object({
 /**
  * Free-tier AI usage gate (per research: usage caps convert better than
  * feature freezes; 5 AI messages/day free is the documented sweet spot).
- * No auth yet → keyed by client IP. Upgrade path: Pro users bypass via
- * a plan header once subscriptions land.
+ * Identity resolution order: authenticated session user (plan-aware) →
+ * x-usage-token header (anonymous device) → client IP.
  */
 const FREE_DAILY_AI_LIMIT = Number(process.env.FREE_DAILY_AI_LIMIT || 5);
 
 const dailyUsage = new Map<string, { date: string; count: number }>();
 
-function usageKey(req: any): string {
+async function usageKey(req: any): Promise<string> {
+  const userId = req.session?.userId;
+  if (userId) {
+    const user = await storage.getUser(userId);
+    if (user) return `user:${user.id}`;
+  }
   return (
     req.headers["x-usage-token"] ||
     req.ip ||
     "unknown"
   );
+}
+
+async function isProUser(req: any): Promise<boolean> {
+  // Header bypass (API clients / future webhook) or authenticated Pro plan
+  if (req.headers["x-plan"] === "pro") return true;
+  const userId = req.session?.userId;
+  if (!userId) return false;
+  const user = await storage.getUser(userId);
+  return user?.plan === "pro";
 }
 
 function getDailyCount(key: string): number {
@@ -46,13 +60,14 @@ function bumpUsage(key: string): number {
 }
 
 export function registerChatRoutes(app: Express) {
-  app.get("/api/chat/status", (req, res) => {
-    const key = usageKey(req);
+  app.get("/api/chat/status", async (req, res) => {
+    const key = await usageKey(req);
+    const isPro = await isProUser(req);
     const used = getDailyCount(key);
     res.json({
       configured: isLlmConfigured(),
       mode: isLlmConfigured() ? "llm" : "local",
-      usage: { used, limit: FREE_DAILY_AI_LIMIT, isPro: false },
+      usage: { used, limit: FREE_DAILY_AI_LIMIT, isPro },
     });
   });
 
@@ -97,8 +112,8 @@ export function registerChatRoutes(app: Express) {
       const { message, conversationId } = parseResult.data;
 
       // Free-tier gate: enforce the daily AI message cap for non-Pro users
-      const key = usageKey(req);
-      const isPro = req.headers["x-plan"] === "pro";
+      const key = await usageKey(req);
+      const isPro = await isProUser(req);
       if (!isPro) {
         const used = getDailyCount(key);
         if (used >= FREE_DAILY_AI_LIMIT) {
@@ -106,7 +121,7 @@ export function registerChatRoutes(app: Express) {
             success: false,
             error: `You've used your ${FREE_DAILY_AI_LIMIT} free AI messages today. Upgrade to Pro for unlimited Alpha Brain access.`,
             code: "ai_limit_reached",
-            usage: { used, limit: FREE_DAILY_AI_LIMIT },
+            usage: { used, limit: FREE_DAILY_AI_LIMIT, isPro: false },
           });
         }
       }

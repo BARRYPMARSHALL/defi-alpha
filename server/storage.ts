@@ -15,6 +15,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  setUserPlan(userId: string, plan: "free" | "pro"): Promise<User | undefined>;
 
   // alpha brain conversations
   createConversation(conversation: InsertConversation): Promise<Conversation>;
@@ -60,9 +61,17 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const user: User = { ...insertUser, id, plan: "free", createdAt: new Date() };
     this.users.set(id, user);
     return user;
+  }
+
+  async setUserPlan(userId: string, plan: "free" | "pro"): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    const updated: User = { ...user, plan };
+    this.users.set(userId, updated);
+    return updated;
   }
 
   async createConversation(insert: InsertConversation): Promise<Conversation> {

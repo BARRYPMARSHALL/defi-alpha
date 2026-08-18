@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer, type Server } from "http";
@@ -38,6 +39,23 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
   );
 
   app.use(express.urlencoded({ extended: false }));
+
+  // Session middleware — powers auth. Memory store is fine for single-instance
+  // self-hosting; swap to connect-pg-simple when running with DATABASE_URL.
+  app.use(
+    session({
+      name: "defi-alpha.sid",
+      secret: process.env.SESSION_SECRET || "dev-only-change-me",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production" && !!process.env.COOKIE_SECURE,
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      },
+    }),
+  );
 
   app.use((req, res, next) => {
     const start = Date.now();
