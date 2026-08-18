@@ -267,7 +267,7 @@ export function PoolsTable({
   }
 
   return (
-    <div className="rounded-md border overflow-x-auto">
+    <div className="rounded-md border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -313,7 +313,7 @@ export function PoolsTable({
                       }`}
                     />
                   </button>
-                  {pool.project}
+                  <span className="truncate max-w-[140px]">{pool.project}</span>
                   {pool.isHot && (
                     <Tooltip>
                       <TooltipTrigger>
@@ -347,7 +347,7 @@ export function PoolsTable({
                 </div>
               </TableCell>
               <TableCell>
-                <span className="font-mono text-sm">{pool.symbol}</span>
+                <span className="font-mono text-sm truncate max-w-[160px] inline-block align-middle">{pool.symbol}</span>
                 {pool.stablecoin && (
                   <Badge variant="secondary" className="ml-2 text-xs">
                     Stable
