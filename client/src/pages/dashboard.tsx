@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, SlidersHorizontal, ChevronDown, Brain } from "lucide-react";
+import { Search, X, SlidersHorizontal, ChevronDown, Brain, GraduationCap } from "lucide-react";
+import { Link } from "wouter";
 import { Header } from "@/components/Header";
 import { AlphaBrainPanel } from "@/components/AlphaBrainPanel";
 import { AlertBell } from "@/components/AlertBell";
@@ -101,6 +102,9 @@ export default function Dashboard() {
   const [searchDraft, setSearchDraft] = useState("");
   const [activeQuick, setActiveQuick] = useState("all");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [courseNudgeDismissed, setCourseNudgeDismissed] = useState(
+    () => localStorage.getItem("defiAlphaCourseNudgeDismissed") === "1",
+  );
 
   const buildQueryUrl = useCallback(() => {
     const params = new URLSearchParams();
@@ -191,6 +195,30 @@ export default function Dashboard() {
       />
 
       <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+        {/* Funnel nudge: new visitors get a subtle invite to the free course */}
+        {!courseNudgeDismissed && (
+          <div className="mb-4 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm">
+            <GraduationCap className="h-4 w-4 text-primary shrink-0" />
+            <p className="flex-1 min-w-0">
+              <span className="font-medium">New to DeFi?</span>{" "}
+              <Link href="/learn" className="text-primary hover:underline">
+                Take the free course
+              </Link>{" "}
+              <span className="text-muted-foreground">then put it to work here.</span>
+            </p>
+            <button
+              onClick={() => {
+                setCourseNudgeDismissed(true);
+                localStorage.setItem("defiAlphaCourseNudgeDismissed", "1");
+              }}
+              className="shrink-0 text-muted-foreground hover:text-foreground"
+              aria-label="Dismiss"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* ── Search first: the tool's primary job ── */}
         <div className="relative mb-3">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

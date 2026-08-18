@@ -10,12 +10,23 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
+export interface Lead {
+  id: string;
+  email: string;
+  source: string;
+  createdAt: Date;
+}
+
 export interface IStorage {
   // users
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   setUserPlan(userId: string, plan: "free" | "pro"): Promise<User | undefined>;
+
+  // email leads (course funnel)
+  addLead(email: string, source: string): Promise<Lead | "duplicate">;
+  listLeads(): Promise<Lead[]>;
 
   // alpha brain conversations
   createConversation(conversation: InsertConversation): Promise<Conversation>;
@@ -33,6 +44,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private conversations: Map<number, Conversation>;
+  private leads: Map<string, Lead>;
   private messages: Map<number, Message>;
   private watchlist: Map<string, string[]>;
   private nextConversationId: number;
@@ -44,9 +56,24 @@ export class MemStorage implements IStorage {
     this.conversations = new Map();
     this.messages = new Map();
     this.watchlist = new Map();
+    this.leads = new Map();
     this.nextConversationId = 1;
     this.nextMessageId = 1;
     this.nextWatchlistId = 1;
+  }
+
+  async addLead(email: string, source: string): Promise<Lead | "duplicate"> {
+    const key = email.toLowerCase();
+    if (this.leads.has(key)) return "duplicate";
+    const lead: Lead = { id: randomUUID(), email: key, source, createdAt: new Date() };
+    this.leads.set(key, lead);
+    return lead;
+  }
+
+  async listLeads(): Promise<Lead[]> {
+    return Array.from(this.leads.values()).sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
   }
 
   async getUser(id: string): Promise<User | undefined> {

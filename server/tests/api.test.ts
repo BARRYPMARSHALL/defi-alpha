@@ -467,3 +467,35 @@ describe("checkout API (CoinGate)", () => {
     expect(res.body.success).toBe(false);
   });
 });
+
+describe("leads API (course funnel)", () => {
+  it("captures an email lead", async () => {
+    const res = await request(app)
+      .post("/api/leads")
+      .send({ email: "learner@example.com", source: "course" });
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.subscribed).toBe(true);
+  });
+
+  it("rejects invalid emails", async () => {
+    const res = await request(app)
+      .post("/api/leads")
+      .send({ email: "not-an-email", source: "course" });
+    expect(res.status).toBe(400);
+  });
+
+  it("is idempotent for duplicate emails", async () => {
+    await request(app).post("/api/leads").send({ email: "dup@example.com" });
+    const dup = await request(app).post("/api/leads").send({ email: "dup@example.com" });
+    expect(dup.status).toBe(201);
+    expect(dup.body.subscribed).toBe(false); // already on the list
+  });
+
+  it("reports a lead count", async () => {
+    const res = await request(app).get("/api/leads/count");
+    expect(res.status).toBe(200);
+    expect(typeof res.body.count).toBe("number");
+    expect(res.body.count).toBeGreaterThanOrEqual(1);
+  });
+});

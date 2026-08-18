@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourseModule, CourseProgress } from "@/components/CourseModule";
+import { EmailCapture } from "@/components/EmailCapture";
 import logoImage from "@assets/33_1775959909661.png";
 
 export default function Learn() {
@@ -581,6 +582,15 @@ export default function Learn() {
               
               </div>
           </div>
+        </div>
+
+        {/* Funnel: course → digest → tool */}
+        <div className="mt-8 max-w-2xl">
+          <EmailCapture
+            source="course"
+            title="Keep the edge — the weekly yield digest"
+            description="You've learned the theory. Now get one email a week with the top 5 risk-adjusted opportunities, what changed, and what to avoid. Free forever."
+          />
         </div>
       </main>
     </div>

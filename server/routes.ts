@@ -11,6 +11,7 @@ import { registerWatchlistRoutes } from "./routes/watchlist";
 import { registerHealthRoutes } from "./routes/health";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerCheckoutRoutes } from "./routes/checkout";
+import { registerLeadsRoutes } from "./routes/leads";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -23,6 +24,7 @@ export async function registerRoutes(
   registerHealthRoutes(app);
   registerAuthRoutes(app);
   registerCheckoutRoutes(app);
+  registerLeadsRoutes(app);
   registerPoolsRoutes(app);
   registerRecommendRoutes(app);
   registerStablecoinsRoutes(app);
