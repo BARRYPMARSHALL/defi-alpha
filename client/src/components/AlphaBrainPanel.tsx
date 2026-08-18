@@ -111,10 +111,10 @@ export function AlphaBrainPanel() {
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
               <p className="text-sm text-muted-foreground">
-                Ask me about the best yield opportunities — I read the live DeFiLlama data.
+                Ask about yields — I read live DeFiLlama data.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                {SUGGESTIONS.map((s) => (
+                {SUGGESTIONS.slice(0, 2).map((s) => (
                   <button
                     key={s}
                     onClick={() => sendMessage(s)}
@@ -180,7 +180,7 @@ export function AlphaBrainPanel() {
                 sendMessage(input);
               }
             }}
-            placeholder="Ask about yields, chains, stablecoins…"
+            placeholder="Ask about yields…"
             className="min-h-10 flex-1 resize-none"
             rows={1}
           />
@@ -189,11 +189,9 @@ export function AlphaBrainPanel() {
           </Button>
         </div>
 
-        {usage && !usage.isPro && remaining !== null && (
+        {usage && !usage.isPro && remaining !== null && remaining > 0 && (
           <p className="mt-2 text-center text-[11px] text-muted-foreground">
-            {remaining > 0
-              ? `${remaining} free AI ${remaining === 1 ? "message" : "messages"} left today`
-              : "Free AI limit reached today"}
+            {remaining} free AI {remaining === 1 ? "msg" : "msgs"} left today
           </p>
         )}
       </CardContent>

@@ -247,13 +247,13 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Quick filter chips */}
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 mb-3 snap-x no-scrollbar">
+        {/* Quick filter chips — wrap on mobile, no horizontal slider feel */}
+        <div className="flex flex-wrap gap-2 mb-3">
           {QUICK_FILTERS.map((qf) => (
             <button
               key={qf.key}
               onClick={() => applyQuickFilter(qf.key)}
-              className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${
+              className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium border transition-colors ${
                 activeQuick === qf.key
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background border-border text-muted-foreground hover:text-foreground"
@@ -264,7 +264,7 @@ export default function Dashboard() {
           ))}
           <button
             onClick={() => applyQuickFilter("watchlist")}
-            className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${
+            className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium border transition-colors ${
               activeQuick === "watchlist"
                 ? "bg-amber-500 text-white border-amber-500"
                 : "bg-background border-border text-muted-foreground hover:text-foreground"

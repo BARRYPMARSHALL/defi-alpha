@@ -13,6 +13,10 @@ export function MobilePreview() {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("/");
 
+  // Never render inside the preview iframe itself (would nest previews forever)
+  const inIframe = typeof window !== "undefined" && window.self !== window.top;
+  if (inIframe) return null;
+
   useEffect(() => {
     if (open) setUrl(window.location.pathname + window.location.search);
   }, [open]);

@@ -7,13 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { getGasInfo, estimateNetApy } from "@/lib/gas-costs";
-import { formatApy, formatTvl } from "@/lib/format";
+import { estimateNetApy } from "@/lib/gas-costs";
+import { formatApy } from "@/lib/format";
 import type { PoolsResponse, PoolWithScore } from "@shared/schema";
 
 interface Allocation {
@@ -30,7 +28,6 @@ function poolKey(pool: PoolWithScore): string {
 
 export default function SimulatorPage() {
   const { user, isPro } = useAuth();
-  const isMobile = useIsMobile();
   const { toast } = useToast();
 
   const [investment, setInvestment] = useState(DEFAULT_INVESTMENT);
@@ -65,18 +62,18 @@ export default function SimulatorPage() {
 
   const addPool = (pool: PoolWithScore) => {
     if (allocations.length >= limit) {
+      // Only free users can hit this (Pro limit is Infinity)
       toast({
-        title: isPro ? "Limit reached" : "Free plan limit",
-        description: isPro
-          ? "Maximum allocations reached."
-          : `Free plan allows ${FREE_POOL_LIMIT} pools. Upgrade to Pro for unlimited.`,
-        variant: isPro ? "destructive" : "default",
+        title: "Free plan limit",
+        description: `Free plan allows ${FREE_POOL_LIMIT} pools. Upgrade to Pro for unlimited.`,
       });
       return;
     }
     if (allocations.some((a) => a.poolId === poolKey(pool))) return;
-    const remaining = 100 - allocations.reduce((s, a) => s + a.weight, 0);
-    const weight = Math.max(10, Math.min(remaining, Math.floor(100 / (allocations.length + 1))));
+    const currentTotal = allocations.reduce((s, a) => s + a.weight, 0);
+    const remaining = 100 - currentTotal;
+    // Even split of what's left, no forced minimum (never exceed 100%)
+    const weight = remaining > 0 ? Math.max(1, Math.min(remaining, Math.floor(remaining / (allocations.length + 1)))) : 1;
     setAllocations((prev) => [...prev, { poolId: poolKey(pool), weight }]);
   };
 
@@ -95,20 +92,23 @@ export default function SimulatorPage() {
   const result = useMemo(() => {
     if (allocations.length === 0 || investment <= 0) return null;
 
+    const totalW = totalWeight || 100; // normalize: weights need not sum to 100
+
     let blendedNet = 0;
     let blendedGross = 0;
     let ilAdjusted = 0;
     const perPool = allocations.map((a) => {
       const pool = poolById.get(a.poolId);
       if (!pool) return null;
-      const usd = investment * (a.weight / 100);
+      const weightFrac = a.weight / totalW; // proportional share
+      const usd = investment * weightFrac;
       const netApy = estimateNetApy(pool.apy, pool.chain, usd, pool.autoCompound || pool.isBeefy);
-      // IL penalty applied to gross APY for a truer picture
+      // IL penalty applied to net APY (post-gas) for the truest picture
       const ilPenalty = pool.ilRisk === "high" ? 0.5 : pool.ilRisk === "medium" ? 0.25 : pool.ilRisk === "low" ? 0.1 : 0;
       const ilAdjNet = netApy * (1 - ilPenalty);
-      blendedGross += pool.apy * (a.weight / 100);
-      blendedNet += netApy * (a.weight / 100);
-      ilAdjusted += ilAdjNet * (a.weight / 100);
+      blendedGross += pool.apy * weightFrac;
+      blendedNet += netApy * weightFrac;
+      ilAdjusted += ilAdjNet * weightFrac;
       return { pool, usd, netApy, ilAdjNet };
     }).filter(Boolean) as { pool: PoolWithScore; usd: number; netApy: number; ilAdjNet: number }[];
 
@@ -117,7 +117,7 @@ export default function SimulatorPage() {
     const dailyReturn = yearlyReturn / 365;
 
     return { perPool, blendedGross, blendedNet, ilAdjusted, yearlyReturn, monthlyReturn, dailyReturn };
-  }, [allocations, investment, poolById]);
+  }, [allocations, investment, poolById, totalWeight]);
 
   const handleShare = async () => {
     if (!result) return;
@@ -180,6 +180,7 @@ export default function SimulatorPage() {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search token, project, or chain…"
                 className="h-10"
+                aria-label="Search pools"
               />
 
               {isLoading ? (
@@ -208,6 +209,7 @@ export default function SimulatorPage() {
                           variant={added ? "ghost" : "default"}
                           onClick={() => (added ? removePool(poolKey(pool)) : addPool(pool))}
                           className="shrink-0"
+                          aria-label={added ? `Remove ${pool.symbol} from portfolio` : `Add ${pool.symbol} to portfolio`}
                         >
                           {added ? <Trash2 className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                         </Button>
@@ -256,7 +258,7 @@ export default function SimulatorPage() {
                             </span>
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-muted-foreground">{a.weight}%</span>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removePool(a.poolId)}>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removePool(a.poolId)} aria-label={`Remove ${pool.symbol} from portfolio`}>
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
@@ -288,7 +290,9 @@ export default function SimulatorPage() {
                     </div>
                     {totalWeight !== 100 && (
                       <p className="text-xs text-muted-foreground">
-                        Tip: adjust weights so the total is 100%. Unallocated {Math.max(0, 100 - totalWeight)}% sits as cash.
+                        {totalWeight < 100
+                          ? `Tip: adjust weights so the total is 100%. Unallocated ${(100 - totalWeight).toFixed(0)}% sits as cash.`
+                          : "Weights total over 100% — results are normalized proportionally."}
                       </p>
                     )}
                   </div>
