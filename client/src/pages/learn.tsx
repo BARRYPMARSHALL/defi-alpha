@@ -1,14 +1,11 @@
 import { Link } from "wouter";
-import { ArrowLeft, TrendingUp, Shield, Zap, Calculator, BookOpen, Trophy, Share2, Gift, ExternalLink, Crown } from "lucide-react";
+import { TrendingUp, Shield, Zap, Calculator, BookOpen, Trophy, Gift, ExternalLink, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourseModule, CourseProgress } from "@/components/CourseModule";
-import { SiX, SiFacebook, SiReddit, SiTelegram } from "react-icons/si";
-import { FaLinkedin } from "react-icons/fa";
 import logoImage from "@assets/33_1775959909661.png";
-import heroBanner from "@assets/x1_1768343977535.png";
 
 export default function Learn() {
   return (
@@ -16,14 +13,6 @@ export default function Learn() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="relative overflow-hidden rounded-xl mb-8" data-testid="hero-banner-learn">
-          <img 
-            src={heroBanner} 
-            alt="DeFi Alpha Agent - Real-time risk-adjusted DeFi Alpha across 100+ chains" 
-            className="w-full h-auto object-cover rounded-xl"
-          />
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3 space-y-6">
             <div className="mb-8">
@@ -37,64 +26,6 @@ export default function Learn() {
               <p className="text-muted-foreground text-lg mb-4">
                 Learn how to find, evaluate, and safely earn yields in DeFi. From basics to advanced strategies.
               </p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                  <Share2 className="h-4 w-4" />
-                  Share this course:
-                </span>
-                <div className="flex items-center gap-2">
-                  <a
-                    href="https://twitter.com/intent/tweet?text=Check%20out%20this%20free%20DeFi%20yield%20farming%20course!%20Learn%20how%20to%20find%20the%20best%20yields%20safely.&url=https://defialphaagent.com/learn"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid="link-share-twitter"
-                  >
-                    <Button size="icon" variant="outline" className="h-8 w-8">
-                      <SiX className="h-3.5 w-3.5" />
-                    </Button>
-                  </a>
-                  <a
-                    href="https://www.facebook.com/sharer/sharer.php?u=https://defialphaagent.com/learn"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid="link-share-facebook"
-                  >
-                    <Button size="icon" variant="outline" className="h-8 w-8">
-                      <SiFacebook className="h-3.5 w-3.5" />
-                    </Button>
-                  </a>
-                  <a
-                    href="https://www.linkedin.com/shareArticle?mini=true&url=https://defialphaagent.com/learn&title=Free%20DeFi%20Yield%20Farming%20Course&summary=Learn%20how%20to%20find%20the%20best%20yields%20in%20DeFi%20safely"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid="link-share-linkedin"
-                  >
-                    <Button size="icon" variant="outline" className="h-8 w-8">
-                      <FaLinkedin className="h-3.5 w-3.5" />
-                    </Button>
-                  </a>
-                  <a
-                    href="https://reddit.com/submit?url=https://defialphaagent.com/learn&title=Free%20DeFi%20Yield%20Farming%20Course"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid="link-share-reddit"
-                  >
-                    <Button size="icon" variant="outline" className="h-8 w-8">
-                      <SiReddit className="h-3.5 w-3.5" />
-                    </Button>
-                  </a>
-                  <a
-                    href="https://t.me/share/url?url=https://defialphaagent.com/learn&text=Check%20out%20this%20free%20DeFi%20yield%20farming%20course!"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid="link-share-telegram"
-                  >
-                    <Button size="icon" variant="outline" className="h-8 w-8">
-                      <SiTelegram className="h-3.5 w-3.5" />
-                    </Button>
-                  </a>
-                </div>
-              </div>
             </div>
 
             <CourseModule
@@ -129,10 +60,10 @@ export default function Learn() {
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-5 mb-6">
                 <h6 className="font-semibold mb-2 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
-                  How DeFi Alpha Agent Saves You Time
+                  How DeFi Alpha Saves You Time
                 </h6>
                 <p className="text-sm mb-3">
-                  Instead of manually checking 50+ protocols across 20+ chains, DeFi Alpha Agent aggregates everything into one dashboard. We pull real-time data from DeFiLlama covering thousands of pools and present only the best opportunities.
+                  Instead of manually checking 50+ protocols across 20+ chains, DeFi Alpha aggregates everything into one dashboard. We pull real-time data from DeFiLlama covering thousands of pools and present only the best opportunities.
                 </p>
                 <ul className="text-sm space-y-1">
                   <li>• <strong>One dashboard</strong> instead of 50 browser tabs</li>
@@ -202,10 +133,10 @@ export default function Learn() {
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-5 mb-6">
                 <h6 className="font-semibold mb-2 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
-                  How DeFi Alpha Agent Helps You Compare Yields
+                  How DeFi Alpha Helps You Compare Yields
                 </h6>
                 <p className="text-sm mb-3">
-                  Comparing yields across protocols is confusing - some show APR, others show APY, and reward tokens fluctuate in value. DeFi Alpha Agent normalizes everything:
+                  Comparing yields across protocols is confusing - some show APR, others show APY, and reward tokens fluctuate in value. DeFi Alpha normalizes everything:
                 </p>
                 <ul className="text-sm space-y-1">
                   <li>• <strong>Standardized APY display</strong> across all pools for fair comparison</li>
@@ -217,7 +148,7 @@ export default function Learn() {
 
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-5 mb-6">
                 <p className="text-sm leading-relaxed">
-                  <strong>Pro Tip:</strong> High APYs often come from token rewards that can lose value. A 500% APY means nothing if the reward token drops 90%. DeFi Alpha Agent shows you sustainability warnings when APY is declining rapidly.
+                  <strong>Pro Tip:</strong> High APYs often come from token rewards that can lose value. A 500% APY means nothing if the reward token drops 90%. DeFi Alpha shows you sustainability warnings when APY is declining rapidly.
                 </p>
               </div>
             </CourseModule>
@@ -272,10 +203,10 @@ export default function Learn() {
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-5 mb-6">
                 <h6 className="font-semibold mb-2 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
-                  How DeFi Alpha Agent Helps You Manage Risk
+                  How DeFi Alpha Helps You Manage Risk
                 </h6>
                 <p className="text-sm mb-3">
-                  Evaluating risk across thousands of pools manually is impossible. DeFi Alpha Agent does the heavy lifting:
+                  Evaluating risk across thousands of pools manually is impossible. DeFi Alpha does the heavy lifting:
                 </p>
                 <ul className="text-sm space-y-2">
                   <li>• <strong>Risk-Adjusted Scores</strong> - We calculate scores using APY, TVL, and IL risk factors. Higher scores = better risk/reward.</li>
@@ -288,7 +219,7 @@ export default function Learn() {
 
               <h5 className="font-medium mb-3 text-base">Reading Our Risk Scores:</h5>
               <p className="mb-6 text-base leading-relaxed">
-                On DeFi Alpha Agent, we calculate risk-adjusted scores using this formula: <strong>APY × (TVL Factor) × (1 - IL Risk)</strong>. This means a pool needs good APY, sufficient TVL, AND low impermanent loss risk to score well. A 1000% APY pool with $50K TVL and volatile assets will score lower than a 20% APY pool with $50M TVL in stablecoins.
+                On DeFi Alpha, we calculate risk-adjusted scores using this formula: <strong>APY × (TVL Factor) × (1 - IL Risk)</strong>. This means a pool needs good APY, sufficient TVL, AND low impermanent loss risk to score well. A 1000% APY pool with $50K TVL and volatile assets will score lower than a 20% APY pool with $50M TVL in stablecoins.
               </p>
             </CourseModule>
 
@@ -347,10 +278,10 @@ export default function Learn() {
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-5 mb-6">
                 <h6 className="font-semibold mb-2 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
-                  How DeFi Alpha Agent Identifies Auto-Compound Opportunities
+                  How DeFi Alpha Identifies Auto-Compound Opportunities
                 </h6>
                 <p className="text-sm mb-3">
-                  Finding auto-compound vaults for your favorite pools used to require checking multiple sites. DeFi Alpha Agent does this automatically:
+                  Finding auto-compound vaults for your favorite pools used to require checking multiple sites. DeFi Alpha does this automatically:
                 </p>
                 <ul className="text-sm space-y-2">
                   <li>• <strong>Green Checkmark Badge</strong> - Pools with available Beefy vaults show a checkmark so you know you can auto-compound</li>
@@ -362,7 +293,7 @@ export default function Learn() {
 
               <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-5 mb-6">
                 <p className="text-sm leading-relaxed">
-                  <strong>DeFi Alpha Agent Pro Tip:</strong> When comparing two similar pools, always prefer the one with auto-compounding available. The gas savings and higher effective APY compound over time to make a significant difference!
+                  <strong>DeFi Alpha Pro Tip:</strong> When comparing two similar pools, always prefer the one with auto-compounding available. The gas savings and higher effective APY compound over time to make a significant difference!
                 </p>
               </div>
             </CourseModule>
@@ -419,10 +350,10 @@ export default function Learn() {
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-5 mb-6">
                 <h6 className="font-semibold mb-2 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
-                  How DeFi Alpha Agent Helps With Advanced Strategies
+                  How DeFi Alpha Helps With Advanced Strategies
                 </h6>
                 <p className="text-sm mb-3">
-                  Finding safe delta-neutral opportunities requires filtering through thousands of pools. DeFi Alpha Agent makes it easy:
+                  Finding safe delta-neutral opportunities requires filtering through thousands of pools. DeFi Alpha makes it easy:
                 </p>
                 <ul className="text-sm space-y-2">
                   <li>• <strong>Stablecoin Filter</strong> - One click to see only stable-stable pairs with near-zero IL</li>
@@ -496,13 +427,13 @@ export default function Learn() {
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-5 mb-6">
                 <h6 className="font-semibold mb-2 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
-                  How DeFi Alpha Agent Complements Tax Tracking
+                  How DeFi Alpha Complements Tax Tracking
                 </h6>
                 <p className="text-sm mb-3">
-                  While DeFi Alpha Agent helps you find opportunities, you'll want to track everything you do for tax purposes:
+                  While DeFi Alpha helps you find opportunities, you'll want to track everything you do for tax purposes:
                 </p>
                 <ul className="text-sm space-y-2">
-                  <li>• <strong>Find pools on DeFi Alpha Agent</strong> → Track deposits in your tax tool</li>
+                  <li>• <strong>Find pools on DeFi Alpha</strong> → Track deposits in your tax tool</li>
                   <li>• <strong>Use our APY data</strong> → Estimate your taxable income from farming</li>
                   <li>• <strong>Multi-chain visibility</strong> → Know which chains you've used (and need to import)</li>
                   <li>• <strong>Protocol links</strong> → Easy access to protocols for transaction history</li>
@@ -586,7 +517,7 @@ export default function Learn() {
                   Check Your Airdrop Eligibility
                 </h6>
                 <p className="text-sm mb-4">
-                  DeFiLlama offers a free tool to check if your wallet is eligible for any claimable airdrops. We've added a quick link in our header!
+                  DeFiLlama offers a free tool to check if your wallet is eligible for any claimable airdrops.
                 </p>
                 <a href="https://defillama.com/airdrops" target="_blank" rel="noopener noreferrer">
                   <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-sm" size="sm" data-testid="button-defillama-airdrops">
@@ -652,40 +583,6 @@ export default function Learn() {
           </div>
         </div>
       </main>
-
-      <footer className="border-t mt-8">
-        <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span>Follow</span>
-              <a
-                href="https://x.com/defialphaagent"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors"
-                data-testid="link-follow-twitter-learn"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                @DefiAlphaAgent
-              </a>
-              <span>for daily alerts</span>
-            </div>
-            <span className="hidden sm:inline text-muted-foreground/50">|</span>
-            <div className="flex items-center gap-2">
-              <span>Business Inquiries & Advertising:</span>
-              <a
-                href="https://x.com/defialphaagent"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors"
-                data-testid="link-contact-twitter-learn"
-              >
-                DM @DefiAlphaAgent
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

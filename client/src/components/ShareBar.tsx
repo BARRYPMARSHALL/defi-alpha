@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Share2 } from "lucide-react";
 
-const SHARE_URL = "https://defialphaagent.com";
+const SHARE_URL = "https://defialpha.com";
 
 interface SharePoolButtonProps {
   pool: {

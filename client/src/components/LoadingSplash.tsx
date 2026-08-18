@@ -15,7 +15,7 @@ export function LoadingSplash({ isLoading }: LoadingSplashProps) {
       <div className="flex flex-col items-center gap-6 max-w-lg px-4">
         <img 
           src={heroBanner} 
-          alt="DeFi Alpha Agent" 
+          alt="DeFi Alpha" 
           className="w-full max-w-md rounded-xl shadow-2xl animate-pulse"
         />
         <div className="flex flex-col items-center gap-2">

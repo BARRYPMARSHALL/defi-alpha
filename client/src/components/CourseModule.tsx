@@ -141,7 +141,7 @@ export function CourseProgress() {
 
   if (!mounted) return null;
 
-  const totalModules = 6;
+  const totalModules = 7;
   const completedCount = Object.values(progress).filter(Boolean).length;
   const percentage = Math.round((completedCount / totalModules) * 100);
 

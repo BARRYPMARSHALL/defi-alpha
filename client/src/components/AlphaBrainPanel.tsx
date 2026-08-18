@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Brain, Send, Loader2, Sparkles, AlertCircle, Crown } from "lucide-react";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -155,9 +156,11 @@ export function AlphaBrainPanel() {
             <p className="text-muted-foreground mt-1">
               You've used your free AI messages for today. Upgrade to Pro for unlimited Alpha Brain.
             </p>
-            <Button size="sm" className="mt-2 w-full" variant="default">
-              <Crown className="h-3.5 w-3.5 mr-1" /> Go Pro — $12/mo
-            </Button>
+            <Link href="/auth">
+              <Button size="sm" className="mt-2 w-full" variant="default">
+                <Crown className="h-3.5 w-3.5 mr-1" /> Go Pro — $12/mo
+              </Button>
+            </Link>
           </div>
         )}
 

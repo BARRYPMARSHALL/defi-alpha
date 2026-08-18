@@ -3,8 +3,7 @@ import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "wouter";
-import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Shield, Zap, Layers, DollarSign, Info } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Shield, Zap, Layers, DollarSign, Info } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -239,11 +238,6 @@ export default function Analytics() {
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <Link href="/">
-              <Button variant="ghost" size="icon" data-testid="button-back-dashboard">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
             <div>
               <h1 className="text-2xl font-bold" data-testid="text-analytics-title">DeFi Analytics</h1>
               <p className="text-sm text-muted-foreground">Comprehensive yield and market insights</p>
@@ -682,30 +676,12 @@ export default function Analytics() {
               </Card>
             )}
 
-            <Card className="lg:col-span-2 bg-gradient-to-r from-pink-500/5 via-rose-500/5 to-orange-500/5 border-pink-500/20" data-testid="card-support-cta">
-              <CardContent className="py-6">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-1">Enjoying these insights?</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Get live, personalized yield guidance from Alpha Brain — unlimited with Pro.
-                    </p>
-                  </div>
-                  <Link href="/">
-                    <Button variant="default" className="gap-2">
-                      <Zap className="h-4 w-4" />
-                      Ask Alpha Brain
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         )}
       </main>
 
       <footer className="border-t mt-6">
-        <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
+        <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between gap-4 flex-wrap text-sm text-muted-foreground">
             <p>
               Data from{" "}
@@ -719,35 +695,6 @@ export default function Analytics() {
               </a>
             </p>
             <p>Auto-refreshes every 5 minutes</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span>Follow</span>
-              <a
-                href="https://x.com/defialphaagent"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors"
-                data-testid="link-follow-twitter-analytics"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                @DefiAlphaAgent
-              </a>
-              <span>for daily alerts</span>
-            </div>
-            <span className="hidden sm:inline text-muted-foreground/50">|</span>
-            <div className="flex items-center gap-2">
-              <span>Business Inquiries:</span>
-              <a
-                href="https://x.com/defialphaagent"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors"
-                data-testid="link-contact-twitter-analytics"
-              >
-                DM @DefiAlphaAgent
-              </a>
-            </div>
           </div>
         </div>
       </footer>
