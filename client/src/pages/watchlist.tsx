@@ -1,0 +1,147 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Star, TrendingDown, TrendingUp } from "lucide-react";
+import { Header } from "@/components/Header";
+import { PoolsMobileCards } from "@/components/PoolsMobileCards";
+import { PoolsTable } from "@/components/PoolsTable";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useWatchlist } from "@/hooks/use-watchlist";
+import type { PoolsResponse, SortState } from "@shared/schema";
+
+interface WatchAlert {
+  poolId: string;
+  symbol: string;
+  project: string;
+  chain: string;
+  previousApy: number;
+  currentApy: number;
+  direction: "up" | "down";
+  message: string;
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000);
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  return date.toLocaleDateString();
+}
+
+export default function WatchlistPage() {
+  const isMobile = useIsMobile();
+  const { watchlist, toggleWatch, synced } = useWatchlist();
+  const [sort, setSort] = useState<SortState>({ field: "apy", direction: "desc" });
+  const [alerts, setAlerts] = useState<WatchAlert[]>([]);
+
+  const { data, isLoading } = useQuery<PoolsResponse>({
+    queryKey: ["/api/pools", "watchlist"],
+    queryFn: async () => {
+      const res = await fetch("/api/pools?sortField=riskAdjustedScore&sortDirection=desc", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch pools");
+      return res.json();
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch alerts for the watchlist token
+  const token = typeof window !== "undefined" ? localStorage.getItem("yieldScoutWatchlistToken") || "" : "";
+  const { data: alertData } = useQuery<{ alerts: WatchAlert[] }>({
+    queryKey: ["/api/watchlist/alerts", token],
+    queryFn: async () => {
+      if (!token) return { alerts: [] };
+      const res = await fetch("/api/watchlist/alerts", {
+        headers: { "x-watchlist-token": token },
+      });
+      if (!res.ok) return { alerts: [] };
+      return res.json();
+    },
+    enabled: synced && watchlist.length > 0 && !!token,
+    refetchInterval: 60_000,
+  });
+
+  const allPools = data?.pools || [];
+  const watchedPools = allPools.filter((p) => watchlist.includes(p.pool));
+  const currentAlerts = alertData?.alerts || alerts;
+
+  return (
+    <div className="min-h-screen bg-background pb-24 sm:pb-0">
+      <Header lastUpdated={data?.lastUpdated ? formatRelativeTime(data.lastUpdated) : null} />
+
+      <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+        <h1 className="text-2xl font-bold tracking-tight mb-1">Watchlist</h1>
+        <p className="text-sm text-muted-foreground mb-4">
+          {watchlist.length > 0
+            ? `${watchlist.length} starred pool${watchlist.length === 1 ? "" : "s"} — tap ★ to remove`
+            : "Star pools from the search page to track them here"}
+        </p>
+
+        {/* Alerts */}
+        {currentAlerts.length > 0 && (
+          <section className="mb-6">
+            <h2 className="text-lg font-semibold mb-2">APY alerts</h2>
+            <div className="space-y-2">
+              {currentAlerts.map((alert, i) => (
+                <Card key={`${alert.poolId}-${i}`}>
+                  <CardContent className="flex items-center gap-3 p-3">
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${alert.direction === "up" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-destructive/15 text-destructive"}`}>
+                      {alert.direction === "up" ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{alert.message}</p>
+                      <p className="text-xs text-muted-foreground truncate">{alert.project} · {alert.chain}</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setAlerts((prev) => prev.filter((_, idx) => idx !== i))}>
+                      Dismiss
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && watchedPools.length === 0 && (
+          <Card className="p-10 text-center">
+            <Star className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+            <p className="text-muted-foreground text-lg mb-4">
+              Your watchlist is empty
+            </p>
+            <Button onClick={() => (window.location.href = "/")}>
+              Browse pools to star
+            </Button>
+          </Card>
+        )}
+
+        {/* Watched pools */}
+        {isLoading && watchlist.length > 0 ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
+          </div>
+        ) : watchedPools.length > 0 ? (
+          isMobile ? (
+            <PoolsMobileCards pools={watchedPools} isLoading={false} />
+          ) : (
+            <div className="rounded-lg border bg-card">
+              <PoolsTable pools={watchedPools} sort={sort} onSortChange={setSort} isLoading={false} />
+            </div>
+          )
+        ) : null}
+
+        {/* Starred pool IDs not in current results (still show count) */}
+        {watchlist.length > watchedPools.length && (
+          <p className="mt-4 text-xs text-muted-foreground">
+            {watchlist.length - watchedPools.length} starred pool(s) not in the current top results.
+          </p>
+        )}
+      </main>
+    </div>
+  );
+}

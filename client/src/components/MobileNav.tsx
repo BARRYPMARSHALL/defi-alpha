@@ -1,20 +1,17 @@
 import { useLocation } from "wouter";
-import { Home, Layers, Briefcase, Coins, GraduationCap } from "lucide-react";
+import { Search, Star, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const TABS = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/yields", label: "Yields", icon: Layers },
-  { href: "/portfolio", label: "Portfolio", icon: Briefcase },
-  { href: "/stablecoins", label: "Stables", icon: Coins },
-  { href: "/learn", label: "Learn", icon: GraduationCap },
+  { href: "/", label: "Search", icon: Search },
+  { href: "/watchlist", label: "Watchlist", icon: Star },
+  { href: "/more", label: "More", icon: MoreHorizontal },
 ];
 
 /**
- * Mobile-first navigation:
- *  - Bottom tab bar on phones (thumb-friendly, 5 tabs max, safe-area aware)
- *  - Hidden on desktop (desktop keeps the top Header)
+ * Mobile-first navigation: 3 tabs max (per research: 3-5 destinations,
+ * ordered by frequency). Desktop keeps the top Header instead.
  */
 export function MobileNav() {
   const [location] = useLocation();
@@ -27,7 +24,7 @@ export function MobileNav() {
       className="fixed bottom-0 inset-x-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]"
       aria-label="Primary"
     >
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-3">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = location === href || (href !== "/" && location.startsWith(href));
           return (

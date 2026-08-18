@@ -77,19 +77,36 @@ interface HistoryMessage {
   content: string;
 }
 
-async function llmReply(userMessage: string, history: HistoryMessage[]): Promise<string> {
+/**
+ * LLM-as-explainer: the deterministic engine has already computed the picks
+ * from LIVE data. The model's only job is to explain those exact picks in
+ * natural language — it is explicitly forbidden from inventing alternatives.
+ */
+async function llmExplain(userMessage: string, engineAnswer: string, history: HistoryMessage[]): Promise<string> {
   const client = getClient()!;
   const completion = await client.chat.completions.create({
     model: OPENAI_MODEL,
     messages: [
-      { role: "system", content: buildSystemPrompt() },
-      ...history.slice(-10),
-      { role: "user", content: userMessage },
+      {
+        role: "system",
+        content: [
+          "You are Alpha Brain's explanation layer in DeFi Alpha.",
+          "Below is the DETERMINISTIC answer computed from live DeFiLlama data. It is 100% factual — every pool, APY and TVL in it is real and current.",
+          "Your ONLY job: restate/explain it in clear, natural, concise language (under ~180 words).",
+          "STRICT RULES:",
+          "- Do NOT add, remove or invent pools, APYs, TVL figures, chains or risks.",
+          "- Do NOT claim a pool is 'good' or 'bad' — describe what the data shows and note risks already flagged.",
+          "- If the engine answer says no matches, say so plainly and suggest how to broaden the search.",
+          "- End with one line: 'Data from live DeFiLlama feeds — not financial advice.'",
+        ].join("\n"),
+      },
+      ...history.slice(-8),
+      { role: "user", content: `QUESTION: ${userMessage}\n\nENGINE ANSWER (ground truth):\n${engineAnswer}` },
     ],
-    temperature: 0.4,
-    max_tokens: 600,
+    temperature: 0.3,
+    max_tokens: 500,
   });
-  return completion.choices[0]?.message?.content || "I couldn't generate an answer. Try rephrasing.";
+  return completion.choices[0]?.message?.content || engineAnswer;
 }
 
 function pickPoolsForQuery(allPools: PoolWithScore[], query: string): PoolWithScore[] {
@@ -132,6 +149,23 @@ function pickPoolsForQuery(allPools: PoolWithScore[], query: string): PoolWithSc
 
   if (q.includes("high apy") || q.includes("best yield")) {
     candidates = candidates.filter(p => p.apy >= 20);
+  }
+
+  // Specific pool/project search: exact-ish token or protocol match wins
+  // (e.g. "USDC on Aave", "Beefy vault", "Pendle"). This is how users find a
+  // known pool fast — deterministic, data-first.
+  const symbolTokens = q.match(/[a-z0-9-]{2,}/g) || [];
+  const meaningful = symbolTokens.filter(t =>
+    !["the", "pool", "find", "show", "what", "best", "top", "apy", "for", "with", "and", "on", "in", "yield", "pools", "vault", "vaults"].includes(t)
+  );
+  if (meaningful.length > 0 && (q.includes("pool") || q.includes("find") || q.includes("show") || q.includes("search"))) {
+    const tokenMatch = candidates.filter(p => {
+      const text = `${p.symbol} ${p.project} ${p.chain}`.toLowerCase();
+      return meaningful.every(t => text.includes(t));
+    });
+    if (tokenMatch.length > 0) {
+      return tokenMatch.sort((a, b) => b.riskAdjustedScore - a.riskAdjustedScore).slice(0, 3);
+    }
   }
 
   return candidates
@@ -190,6 +224,9 @@ function localReply(userMessage: string, allPools: PoolWithScore[]): string {
 
   // Default: best risk-adjusted picks overall.
   const picks = pickPoolsForQuery(allPools, q);
+  if (picks.length === 0) {
+    return `${summary}\n\nNo pools match that exactly. Try a chain (Arbitrum, Base, Solana…), "stablecoins", "auto-compound", or "high apy" — or search the pool list on the main page.`;
+  }
   return `${summary}\n\n**Best risk-adjusted opportunities:**\n\n${formatPicks(picks.map(p => formatPoolForResponse(p, true)))}\n\nTry asking for a specific chain (Arbitrum, Base, Solana…), stablecoins, or auto-compounding vaults to narrow it down.`;
 }
 
@@ -202,15 +239,20 @@ export async function chat(userMessage: string, conversationId?: number): Promis
     history = msgs.map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
   }
 
+  // ENGINE-FIRST: compute the deterministic answer from live data. This is the
+  // source of truth — it cannot hallucinate. The LLM (when configured) only
+  // explains these exact picks; if it fails, the engine answer stands.
+  const engineAnswer = localReply(userMessage, allPools);
+
   if (isLlmConfigured()) {
     try {
-      const reply = await llmReply(userMessage, history);
+      const reply = await llmExplain(userMessage, engineAnswer, history);
       return { mode: "llm", reply };
     } catch (error) {
-      console.error("[AlphaBrain] LLM call failed, falling back to local advisor:", error);
-      return { mode: "local", reply: localReply(userMessage, allPools) };
+      console.error("[AlphaBrain] LLM explanation failed, returning engine answer:", error);
+      return { mode: "local", reply: engineAnswer };
     }
   }
 
-  return { mode: "local", reply: localReply(userMessage, allPools) };
+  return { mode: "local", reply: engineAnswer };
 }

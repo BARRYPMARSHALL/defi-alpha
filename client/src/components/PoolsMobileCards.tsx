@@ -208,37 +208,58 @@ export function PoolsMobileCards({ pools, isLoading }: PoolsMobileCardsProps) {
                   rel="noopener noreferrer"
                 >
                   <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                  Details
+                  View on DeFiLlama
                 </a>
               </Button>
-              <Button
-                variant="default"
-                size="sm"
-                asChild
-                className={
-                  pool.isBeefy || pool.autoCompound
-                    ? "flex-1 bg-emerald-600 hover:bg-emerald-700"
-                    : "flex-1"
-                }
-                data-testid={`button-zap-mobile-${pool.pool.slice(0, 8)}`}
-              >
-                <a
-                  href={
+              {/* Direct link to the actual pool/protocol page for fast investing */}
+              {pool.url && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  asChild
+                  className={
                     pool.isBeefy || pool.autoCompound
-                      ? `https://app.beefy.com/#/?search=${encodeURIComponent(pool.symbol)}`
-                      : `https://zapper.xyz/explore?search=${encodeURIComponent(pool.symbol)}`
+                      ? "flex-1 bg-emerald-600 hover:bg-emerald-700"
+                      : "flex-1"
                   }
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  data-testid={`button-invest-mobile-${pool.pool.slice(0, 8)}`}
                 >
-                  {pool.isBeefy || pool.autoCompound ? (
-                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                  ) : (
+                  <a href={pool.url} target="_blank" rel="noopener noreferrer">
                     <Zap className="h-3.5 w-3.5 mr-1" />
-                  )}
-                  Zap In
-                </a>
-              </Button>
+                    Invest
+                  </a>
+                </Button>
+              )}
+              {!pool.url && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  asChild
+                  className={
+                    pool.isBeefy || pool.autoCompound
+                      ? "flex-1 bg-emerald-600 hover:bg-emerald-700"
+                      : "flex-1"
+                  }
+                  data-testid={`button-zap-mobile-${pool.pool.slice(0, 8)}`}
+                >
+                  <a
+                    href={
+                      pool.isBeefy || pool.autoCompound
+                        ? `https://app.beefy.com/#/?search=${encodeURIComponent(pool.symbol)}`
+                        : `https://zapper.xyz/explore?search=${encodeURIComponent(pool.symbol)}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {pool.isBeefy || pool.autoCompound ? (
+                      <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <Zap className="h-3.5 w-3.5 mr-1" />
+                    )}
+                    Zap In
+                  </a>
+                </Button>
+              )}
             </div>
           </Card>
         );

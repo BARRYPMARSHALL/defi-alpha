@@ -468,6 +468,32 @@ export function PoolsTable({
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
                   <SharePoolButton pool={pool} />
+                  {pool.url && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          asChild
+                          className="bg-chart-2 hover:bg-chart-2/90"
+                          data-testid={`button-invest-${pool.pool.slice(0, 8)}`}
+                        >
+                          <a
+                            href={pool.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gap-1"
+                          >
+                            <Zap className="h-3 w-3" />
+                            <span className="hidden lg:inline">Invest</span>
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Open the actual pool to invest</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button

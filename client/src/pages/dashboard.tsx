@@ -1,18 +1,51 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { ChevronRight, ArrowUpRight, Layers, TrendingUp } from "lucide-react";
+import { Search, X, SlidersHorizontal, ChevronDown, Brain } from "lucide-react";
 import { Header } from "@/components/Header";
 import { AlphaBrainPanel } from "@/components/AlphaBrainPanel";
-import { AlertBell } from "@/components/AlertBell";
-import { SummaryCards } from "@/components/SummaryCards";
+import { FiltersBar } from "@/components/FiltersBar";
+import { PoolsTable } from "@/components/PoolsTable";
 import { PoolsMobileCards } from "@/components/PoolsMobileCards";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { PoolsResponse } from "@shared/schema";
+import { useWatchlist } from "@/hooks/use-watchlist";
+import type { FilterState, SortState, PoolsResponse } from "@shared/schema";
+
+const DEFAULT_FILTERS: FilterState = {
+  minTvl: 0,
+  chains: [],
+  projectTypes: [],
+  minApy: 0,
+  lowIlOnly: false,
+  searchQuery: "",
+};
+
+const DEFAULT_SORT: SortState = {
+  field: "riskAdjustedScore",
+  direction: "desc",
+};
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) return { ...fallback, ...JSON.parse(saved) } as T;
+  } catch {
+    // ignore
+  }
+  return fallback;
+}
+
+function saveToStorage(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+}
 
 function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -25,15 +58,66 @@ function formatRelativeTime(dateStr: string): string {
   return date.toLocaleDateString();
 }
 
+/** Quick one-tap filter chips — the most common searches, zero friction. */
+const QUICK_FILTERS: { key: string; label: string; apply: (f: FilterState) => FilterState }[] = [
+  {
+    key: "all",
+    label: "All",
+    apply: (f) => ({ ...DEFAULT_FILTERS, searchQuery: f.searchQuery }),
+  },
+  {
+    key: "stable",
+    label: "Stablecoins",
+    apply: (f) => ({ ...f, projectTypes: ["stable"], minApy: 0, lowIlOnly: false }),
+  },
+  {
+    key: "highApy",
+    label: "High APY (20%+)",
+    apply: (f) => ({ ...f, minApy: 20, minTvl: 500000 }),
+  },
+  {
+    key: "safe",
+    label: "Safe (low IL)",
+    apply: (f) => ({ ...f, lowIlOnly: true, minTvl: 5000000 }),
+  },
+  {
+    key: "auto",
+    label: "Auto-compound",
+    apply: (f) => ({ ...f, searchQuery: "auto" }),
+  },
+];
+
 export default function Dashboard() {
   const isMobile = useIsMobile();
+  const { watchlist } = useWatchlist();
+
+  const [filters, setFilters] = useState<FilterState>(() =>
+    loadFromStorage("homeFilters", DEFAULT_FILTERS),
+  );
+  const [sort, setSort] = useState<SortState>(() =>
+    loadFromStorage("homeSort", DEFAULT_SORT),
+  );
+  const [searchDraft, setSearchDraft] = useState("");
+  const [activeQuick, setActiveQuick] = useState("all");
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const buildQueryUrl = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set("minTvl", filters.minTvl.toString());
+    params.set("minApy", filters.minApy.toString());
+    params.set("lowIlOnly", filters.lowIlOnly.toString());
+    params.set("searchQuery", filters.searchQuery);
+    params.set("sortField", sort.field);
+    params.set("sortDirection", sort.direction);
+    filters.chains.forEach((chain) => params.append("chains", chain));
+    filters.projectTypes.forEach((type) => params.append("projectTypes", type));
+    return `/api/pools?${params.toString()}`;
+  }, [filters, sort]);
 
   const { data, isLoading, isFetching, refetch } = useQuery<PoolsResponse>({
-    queryKey: ["/api/pools", "home"],
+    queryKey: ["/api/pools", filters, sort],
     queryFn: async () => {
-      const res = await fetch("/api/pools?sortField=riskAdjustedScore&sortDirection=desc", {
-        credentials: "include",
-      });
+      const res = await fetch(buildQueryUrl(), { credentials: "include" });
       if (!res.ok) throw new Error(`Failed to fetch pools: ${res.status}`);
       return res.json();
     },
@@ -42,13 +126,59 @@ export default function Dashboard() {
   });
 
   const pools = data?.pools || [];
+  const chains = data?.chains || [];
   const stats = data?.stats || { totalPools: 0, avgApy: 0, topChain: "-", topChainTvl: 0 };
-  const topPicks = pools.filter((p) => p.riskAdjustedScore > 0).slice(0, 5);
-  const hotPicks = pools.filter((p) => p.isHot).slice(0, 5);
+
+  // Client-side watchlist view: filter the already-loaded list
+  const visiblePools = useMemo(() => {
+    if (activeQuick === "watchlist") {
+      return pools.filter((p) => watchlist.includes(p.pool));
+    }
+    return pools;
+  }, [pools, watchlist, activeQuick]);
+
+  const handleFiltersChange = useCallback((next: FilterState) => {
+    setFilters(next);
+    saveToStorage("homeFilters", next);
+  }, []);
+
+  const handleSortChange = useCallback((next: SortState) => {
+    setSort(next);
+    saveToStorage("homeSort", next);
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
+    setSort(DEFAULT_SORT);
+    setSearchDraft("");
+    setActiveQuick("all");
+    saveToStorage("homeFilters", DEFAULT_FILTERS);
+    saveToStorage("homeSort", DEFAULT_SORT);
+  }, []);
 
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
+
+  const applyQuickFilter = useCallback(
+    (key: string) => {
+      setActiveQuick(key);
+      if (key === "watchlist") return; // client-side only
+      const preset = QUICK_FILTERS.find((q) => q.key === key);
+      if (preset) {
+        handleFiltersChange(preset.apply(filters));
+        setSearchDraft(preset.apply(filters).searchQuery);
+      }
+    },
+    [filters, handleFiltersChange],
+  );
+
+  const activeFilterCount =
+    (filters.chains.length > 0 ? 1 : 0) +
+    (filters.projectTypes.length > 0 ? 1 : 0) +
+    (filters.minTvl > 0 ? 1 : 0) +
+    (filters.minApy > 0 ? 1 : 0) +
+    (filters.lowIlOnly ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-background pb-24 sm:pb-0">
@@ -56,133 +186,178 @@ export default function Dashboard() {
         onRefresh={handleRefresh}
         isRefreshing={isFetching}
         lastUpdated={data?.lastUpdated ? formatRelativeTime(data.lastUpdated) : null}
-        rightSlot={<AlertBell />}
       />
 
-      <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-6">
-        {/* Value proposition — one line, no giant hero image */}
-        <section className="pt-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Find the safest high yields in DeFi
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 max-w-2xl">
-            {stats.totalPools.toLocaleString() || "15,000+"} pools scored by real risk-adjusted return.
-            Ask Alpha Brain what to do with your money.
-          </p>
-        </section>
+      <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+        {/* ── Search first: the tool's primary job ── */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            value={searchDraft}
+            onChange={(e) => {
+              setSearchDraft(e.target.value);
+              handleFiltersChange({ ...filters, searchQuery: e.target.value });
+              setActiveQuick("all");
+            }}
+            placeholder="Search any pool, token, or chain… (e.g. USDC, Aave, Arbitrum)"
+            className="pl-11 pr-10 h-12 text-base"
+            autoFocus={!isMobile}
+          />
+          {searchDraft && (
+            <button
+              onClick={() => {
+                setSearchDraft("");
+                handleFiltersChange({ ...filters, searchQuery: "" });
+              }}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
-        {/* Alpha Brain — the moat, front and center */}
-        <section>
+        {/* Quick filter chips */}
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 mb-3 snap-x no-scrollbar">
+          {QUICK_FILTERS.map((qf) => (
+            <button
+              key={qf.key}
+              onClick={() => applyQuickFilter(qf.key)}
+              className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${
+                activeQuick === qf.key
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {qf.label}
+            </button>
+          ))}
+          <button
+            onClick={() => applyQuickFilter("watchlist")}
+            className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${
+              activeQuick === "watchlist"
+                ? "bg-amber-500 text-white border-amber-500"
+                : "bg-background border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            ★ Watchlist ({watchlist.length})
+          </button>
+        </div>
+
+        {/* Results meta + sort + advanced filters */}
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-muted-foreground">
+            {isLoading
+              ? "Loading pools…"
+              : `${visiblePools.length.toLocaleString()} pools${
+                  activeQuick === "watchlist" ? " watched" : ""
+                } · ${data?.chains.length || 0} chains`}
+          </p>
+          <div className="flex items-center gap-2">
+            {/* Sort dropdown */}
+            <div className="relative">
+              <select
+                value={`${sort.field}:${sort.direction}`}
+                onChange={(e) => {
+                  const [field, direction] = e.target.value.split(":");
+                  handleSortChange({ field: field as SortState["field"], direction: direction as "asc" | "desc" });
+                }}
+                className="appearance-none h-9 rounded-md border bg-background pl-3 pr-8 text-sm font-medium"
+                aria-label="Sort pools"
+              >
+                <option value="riskAdjustedScore:desc">Best score</option>
+                <option value="apy:desc">Highest APY</option>
+                <option value="apy:asc">Lowest APY</option>
+                <option value="tvlUsd:desc">Highest TVL</option>
+                <option value="apyPct7D:desc">7d gain</option>
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-muted-foreground" />
+            </div>
+
+            {/* Advanced filters: bottom sheet on mobile, inline on desktop */}
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  <SlidersHorizontal className="h-4 w-4 mr-1" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Badge variant="default" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[85vh] overflow-y-auto pb-10 sm:hidden">
+                <SheetHeader className="mb-4">
+                  <SheetTitle>Advanced filters</SheetTitle>
+                </SheetHeader>
+                <FiltersBar
+                  filters={filters}
+                  sort={sort}
+                  availableChains={chains}
+                  onFiltersChange={handleFiltersChange}
+                  onSortChange={handleSortChange}
+                  onReset={() => {
+                    handleReset();
+                    setSheetOpen(false);
+                  }}
+                  resultCount={visiblePools.length}
+                />
+                <Button className="mt-4 w-full" onClick={() => setSheetOpen(false)}>
+                  Show {visiblePools.length} pools
+                </Button>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+
+        {/* Full filter bar on desktop */}
+        {!isMobile && activeFilterCount > 0 && (
+          <FiltersBar
+            filters={filters}
+            sort={sort}
+            availableChains={chains}
+            onFiltersChange={handleFiltersChange}
+            onSortChange={handleSortChange}
+            onReset={handleReset}
+            resultCount={visiblePools.length}
+          />
+        )}
+
+        {/* ── The full pool list: the core job ── */}
+        {isLoading && pools.length === 0 ? (
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : visiblePools.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-10 text-center">
+            <p className="text-muted-foreground text-lg">
+              {activeQuick === "watchlist"
+                ? "No watched pools yet — star a pool to track it here"
+                : "No pools match your filters"}
+            </p>
+            <Button variant="outline" className="mt-4" onClick={handleReset}>
+              Reset
+            </Button>
+          </div>
+        ) : isMobile ? (
+          <PoolsMobileCards pools={visiblePools} isLoading={false} />
+        ) : (
+          <div className="rounded-lg border bg-card">
+            <PoolsTable pools={visiblePools} sort={sort} onSortChange={handleSortChange} isLoading={false} />
+          </div>
+        )}
+
+        {/* ── Alpha Brain: advisory, below the data (data first) ── */}
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <Brain className="h-4 w-4 text-primary" />
+            Alpha Brain — ask about what you see
+          </h2>
           <AlphaBrainPanel />
         </section>
-
-        {/* Summary stats */}
-        <SummaryCards
-          totalPools={stats.totalPools}
-          avgApy={stats.avgApy}
-          topChain={stats.topChain}
-          topChainTvl={stats.topChainTvl}
-          isLoading={isLoading}
-        />
-
-        {/* Top picks */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              Top opportunities
-            </h2>
-            <Link href="/yields">
-              <Button variant="ghost" size="sm" className="text-primary">
-                View all <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-lg" />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {topPicks.slice(0, 3).map((pool, i) => (
-                <Card key={pool.pool} className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">
-                        {i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold truncate">{pool.symbol}</span>
-                          <Badge variant="outline" className="shrink-0 text-[10px]">
-                            {pool.chain}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {pool.project}
-                          {pool.isBeefy ? " · 🔄 Beefy" : pool.autoCompound ? " · 🔄 auto-compound" : ""}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="font-bold text-emerald-500">{pool.apy.toFixed(1)}%</div>
-                        <div className="text-xs text-muted-foreground">
-                          {pool.tvlUsd >= 1e9
-                            ? `$${(pool.tvlUsd / 1e9).toFixed(1)}B`
-                            : pool.tvlUsd >= 1e6
-                              ? `$${(pool.tvlUsd / 1e6).toFixed(1)}M`
-                              : `$${(pool.tvlUsd / 1e3).toFixed(0)}K`}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Hot pools quick strip (mobile-friendly horizontal scroll) */}
-        {hotPicks.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-primary" />
-              Hot right now
-            </h2>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x">
-              {hotPicks.map((pool) => (
-                <Card key={pool.pool} className="shrink-0 w-40 snap-start">
-                  <CardContent className="p-3">
-                    <div className="text-sm font-semibold truncate">{pool.symbol}</div>
-                    <div className="text-xs text-muted-foreground truncate mb-1">{pool.project}</div>
-                    <div className="flex items-center gap-1 text-emerald-500 font-semibold">
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                      {pool.apy.toFixed(1)}%
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">{pool.chain}</div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Mobile: compact pool list */}
-        {isMobile && pools.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold">All pools</h2>
-              <Link href="/yields">
-                <Button variant="ghost" size="sm" className="text-primary">
-                  Browse <ChevronRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <PoolsMobileCards pools={pools.slice(0, 6)} isLoading={false} />
-          </section>
-        )}
       </main>
     </div>
   );
