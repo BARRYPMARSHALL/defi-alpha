@@ -58,3 +58,21 @@ export function registerDigestRoutes(app: Express) {
     }
   });
 }
+
+// Digest sending endpoint — guarded, dry-runs without RESEND_API_KEY
+export function registerEmailRoutes(app: Express) {
+  app.get("/api/digest/send", async (_req, res) => {
+    try {
+      const { sendDigestToAllLeads, isEmailConfigured } = await import("../lib/email");
+      const result = await sendDigestToAllLeads();
+      res.json({
+        success: true,
+        ...result,
+        configured: isEmailConfigured(),
+      });
+    } catch (error) {
+      console.error("Error sending digest:", error);
+      res.status(500).json({ success: false, error: "Failed to send digest" });
+    }
+  });
+}

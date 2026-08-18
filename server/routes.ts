@@ -11,7 +11,33 @@ import { registerWatchlistRoutes } from "./routes/watchlist";
 import { registerHealthRoutes } from "./routes/health";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerCheckoutRoutes } from "./routes/checkout";
-import { registerLeadsRoutes, registerDigestRoutes } from "./routes/leads";
+import { registerLeadsRoutes, registerDigestRoutes, registerEmailRoutes } from "./routes/leads";
+
+/** Weekly digest job: sends every DIGEST_DAY (0=Sunday, default 0) at 09:00 UTC. */
+function startWeeklyDigestSchedule() {
+  if (!process.env.RESEND_API_KEY) {
+    console.log("Weekly digest schedule disabled (set RESEND_API_KEY to enable)");
+    return;
+  }
+  const day = Number(process.env.DIGEST_DAY ?? 0);
+  const hour = Number(process.env.DIGEST_HOUR ?? 9);
+  console.log(`Weekly digest schedule enabled — ${day === 0 ? "Sunday" : `day ${day}`} ${hour}:00 UTC`);
+
+  const check = async () => {
+    const now = new Date();
+    if (now.getUTCDay() !== day || now.getUTCHours() !== hour) return;
+    try {
+      const { sendDigestToAllLeads } = await import("./lib/email");
+      const result = await sendDigestToAllLeads();
+      console.log(`[Digest] Sent ${result.sent}, failed ${result.failed} (mode ${result.mode})`);
+    } catch (error) {
+      console.error("[Digest] Scheduled send failed:", error);
+    }
+  };
+
+  check(); // run once at boot in case we're in the window
+  setInterval(check, 60 * 60 * 1000); // check hourly
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -26,6 +52,7 @@ export async function registerRoutes(
   registerCheckoutRoutes(app);
   registerLeadsRoutes(app);
   registerDigestRoutes(app);
+  registerEmailRoutes(app);
   registerPoolsRoutes(app);
   registerRecommendRoutes(app);
   registerStablecoinsRoutes(app);
@@ -38,6 +65,9 @@ export async function registerRoutes(
     await fetchPoolsData();
     return getCachedData()?.pools || [];
   });
+
+  // Weekly digest email (RESEND_API_KEY + window)
+  startWeeklyDigestSchedule();
 
   return httpServer;
 }
