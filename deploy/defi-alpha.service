@@ -1,0 +1,27 @@
+# ── DeFi Alpha — systemd unit (self-hosted) ────────────────────────────
+# Install: sudo cp deploy/defi-alpha.service /etc/systemd/system/
+#          sudo systemctl daemon-reload
+#          sudo systemctl enable --now defi-alpha
+#
+# Point EnvironmentFile at your real env file (see .env.example).
+
+[Unit]
+Description=DeFi Alpha - real-time risk-adjusted DeFi yield optimizer
+After=network.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=defi
+WorkingDirectory=/opt/defi-alpha
+EnvironmentFile=/opt/defi-alpha/.env
+ExecStart=/usr/bin/node dist/index.cjs
+Restart=on-failure
+RestartSec=5
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

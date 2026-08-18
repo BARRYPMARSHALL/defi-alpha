@@ -1,0 +1,61 @@
+You are an expert TypeScript + Express.js developer. I have an existing full-stack DeFi yield scanning application built with:
+
+- Express.js backend (TypeScript)
+- React + Vite frontend
+- Tailwind + shadcn/ui
+- Drizzle ORM + PostgreSQL (but not needed for this endpoint)
+- DeFiLlama API for fetching real-time yield data across chains
+
+The app already has logic to:
+- Fetch yield pools/liquidity data from DeFiLlama API
+- Score risk-adjusted returns (considering IL, TVL, protocol risk, etc.)
+- Detect auto-compounding opportunities (e.g. via Beefy, Yearn, etc.)
+
+I need you to ADD a clean, public JSON API endpoint to the Express backend that:
+
+1. Route: GET /api/recommend (or /api/scan if you prefer)
+2. Accepts query parameters (all optional with smart defaults):
+   - chains: string (comma-separated like "base,ethereum,arbitrum" or "all" for everything, default: "all")
+   - minApy: number (minimum base APY threshold, default: 5)
+   - riskTolerance: string ("low", "medium", "high", default: "medium")
+   - userQuery: string (optional natural language query like "best low-IL stablecoin pool" or "highest APY with auto-compound")
+
+3. Returns structured JSON response that is:
+   - Conversational and actionable (not just raw data table)
+   - Personalized based on params / userQuery
+   - Includes: top 1-3 picks with:
+     - Protocol + pool name
+     - APY (base + incentives)
+     - Risk assessment
+     - TVL
+     - Auto-compound info if available
+     - Pro tip / comparison (e.g. "Beats centralized 10% on Nexo")
+     - Direct "Zap In" affiliate link (use placeholder like "https://beefy.com/zap?pool=example" or generate dynamic if possible)
+
+Example desired JSON structure (make the output feel like a helpful advisor reply):
+
+{
+  "success": true,
+  "query": "user's input or params summary",
+  "topPick": {
+    "pool": "USDC/USDT 0.01% on Aerodrome (Base)",
+    "apy": "18.2%",
+    "risk": "Low (zero IL for stables)",
+    "tvl": "$82M",
+    "autoCompound": "Yes via Beefy",
+    "proTip": "This beats Nexo’s 10% by 8.2% while keeping full control on-chain",
+    "zapLink": "https://beefy.com/zap?... (affiliate placeholder)"
+  },
+  "alternatives": [ ... 1-2 more picks ... ],
+  "timestamp": "2026-01-12T..."
+}
+
+4. Handle errors gracefully (return { success: false, error: "message" } with 400/500 status)
+5. Add CORS support if not already present (allow all origins for now)
+6. Make it secure-ish: optional future API key check via header 'x-api-key' (just log it for now, don't enforce yet)
+7. Use existing services/logic where possible (assume functions like fetchYieldsFromDeFiLlama(), scoreRiskAdjusted(), detectAutoCompound() already exist – call them accordingly)
+8. Keep code clean, typed, async/await, with proper error handling
+
+Please generate the code to ADD this endpoint (router.get or app.get) – show the new route file or additions to existing server.ts/app.ts. Include imports needed. Do NOT rewrite the whole app, just the new endpoint code.
+
+After generating, suggest how to test it (e.g. curl or browser URL examples).

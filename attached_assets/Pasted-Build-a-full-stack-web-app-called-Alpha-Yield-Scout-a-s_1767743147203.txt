@@ -1,0 +1,49 @@
+Build a full-stack web app called "Alpha Yield Scout" — a smart, real-time DeFi yield optimizer dashboard that helps users find the best liquidity pools and lending opportunities across chains, smarter and more actionable than metrix.finance.
+
+Tech stack: Use React (with Vite for fast setup) for the frontend, Tailwind CSS for responsive modern styling (dark mode supported), and Node.js/Express for any backend needs. Use Replit Database if needed for user preferences, but keep most logic client-side for speed.
+
+Core features:
+
+1. **Real-time Yield Data Fetching**:
+   - Fetch all current yield opportunities from the free DeFiLlama yields API endpoint: https://yields.llama.fi/pools (no API key needed).
+   - On app load and every 5 minutes (use setInterval or a background fetch), pull the latest data.
+   - Parse and display a sortable table of pools with columns: Chain, Project, Symbol/Pair, TVL (USD), APY (total), APY Base, APY Rewards, Reward Tokens, Projected IL (use il7d if available or estimate low/medium/high based on exposure/single/multi), Pool Address/Link.
+
+2. **Smart Filtering & Sorting**:
+   - Top filters bar: Minimum TVL (default $5M), Chains (multi-select: Ethereum, Arbitrum, Base, Optimism, Polygon, etc.), Project type (LP, Lending, Stable, Volatile), Min APY, Low IL risk only (filter exposure=single or low il7d).
+   - Sort by: Risk-adjusted APY (calculate as APY minus estimated IL penalty), TVL, APY, Newest.
+   - Highlight "Hot" pools: high volumeUsd7d or rising APY.
+
+3. **Smart Recommendations Engine**:
+   - Add an AI-powered recommendations section: "Top Alpha Opportunities" — top 10 pools ranked by risk-adjusted return (high APY, high TVL, low IL).
+   - Simple scoring: score = APY * (TVL / 1e7) * (1 - ilRiskFactor) where ilRiskFactor is 0 for single exposure, higher for multi.
+   - Bonus: Suggest moves like "This pool has 15% higher risk-adjusted APY than average USDC lending".
+
+4. **Wallet Integration & Personalization**:
+   - Add a "Connect Wallet" button in the header using WalletConnect (support MetaMask, WalletConnect, Coinbase Wallet).
+   - Use wagmi or viem + @walletconnect/modal for easy integration.
+   - Once connected, show user's wallet address, and optionally fetch their current positions via Zapper API (free tier: https://api.zapper.xyz/v2/positions?addresses[]={address}) — display "Your Current Yields" section comparing to top opportunities.
+   - Suggest switches: "Your current pool has X% APY — switch to this one for +Y%?"
+
+5. **Actionable One-Click Links**:
+   - For each pool, add buttons/links:
+     - "View on DeFiLlama" (direct link).
+     - "Zap In" — link to Beefy.finance, Zapper.fi, or Yearn vault if it's an auto-compounder.
+     - "Add Liquidity" — direct link to the protocol (e.g., Uniswap app for Uniswap pools).
+
+6. **UI/UX**:
+   - Clean, modern dashboard layout: Header with title, connect button, refresh button.
+   - Hero section: Summary cards (Total opportunities, Avg APY, Top chain by TVL).
+   - Main table (responsive, mobile-friendly) with search bar.
+   - Recommendations sidebar or tab.
+   - Loading states, error handling (if API fails, show cached data).
+   - Make it beautiful: Use gradients, cards, charts (add a simple pie chart for chain distribution using Chart.js).
+
+7. **Extras for Smartness**:
+   - Auto-refresh data every 5-10 mins.
+   - User preferences: Save filters to localStorage.
+   - Mobile-responsive from the start.
+
+Build this step-by-step: First scaffold the React app, add API fetching, then table, then filters/sorting, then recommendations, then wallet connect, then polish UI. Test thoroughly in the browser preview after each major step and fix any issues automatically.
+
+Make it production-ready, fast, and deployable on Replit. Let's go!
