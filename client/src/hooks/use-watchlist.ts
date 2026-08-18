@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const STORAGE_KEY = "yieldScoutWatchlist";
-const TOKEN_KEY = "yieldScoutWatchlistToken";
+const STORAGE_KEY = "defiAlphaWatchlist";
+const TOKEN_KEY = "defiAlphaWatchlistToken";
 
 function loadWatchlist(): string[] {
   try {

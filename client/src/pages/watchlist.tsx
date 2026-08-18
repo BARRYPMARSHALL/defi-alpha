@@ -51,7 +51,7 @@ export default function WatchlistPage() {
   });
 
   // Fetch alerts for the watchlist token
-  const token = typeof window !== "undefined" ? localStorage.getItem("yieldScoutWatchlistToken") || "" : "";
+  const token = typeof window !== "undefined" ? localStorage.getItem("defiAlphaWatchlistToken") || "" : "";
   const { data: alertData } = useQuery<{ alerts: WatchAlert[] }>({
     queryKey: ["/api/watchlist/alerts", token],
     queryFn: async () => {

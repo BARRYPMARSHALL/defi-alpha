@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search, X, SlidersHorizontal, ChevronDown, Brain } from "lucide-react";
 import { Header } from "@/components/Header";
 import { AlphaBrainPanel } from "@/components/AlphaBrainPanel";
+import { AlertBell } from "@/components/AlertBell";
 import { FiltersBar } from "@/components/FiltersBar";
 import { PoolsTable } from "@/components/PoolsTable";
 import { PoolsMobileCards } from "@/components/PoolsMobileCards";
@@ -186,6 +187,7 @@ export default function Dashboard() {
         onRefresh={handleRefresh}
         isRefreshing={isFetching}
         lastUpdated={data?.lastUpdated ? formatRelativeTime(data.lastUpdated) : null}
+        rightSlot={<AlertBell />}
       />
 
       <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6">

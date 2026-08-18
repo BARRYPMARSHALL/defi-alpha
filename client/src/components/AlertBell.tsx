@@ -34,7 +34,7 @@ export function AlertBell() {
   useEffect(() => {
     if (!synced || watchlist.length === 0) return;
 
-    const token = localStorage.getItem("yieldScoutWatchlistToken") || "";
+    const token = localStorage.getItem("defiAlphaWatchlistToken") || "";
     if (!token) return;
 
     let cancelled = false;
