@@ -93,6 +93,17 @@ describe("filterAndSortPools", () => {
     expect(result.map(p => p.pool)).toEqual(["c"]);
   });
 
+  it("matches ALL words in a multi-word searchQuery", () => {
+    // "usdc ethereum" must match only pools whose text contains BOTH words
+    // (a and b are ETH-USDC on Ethereum; c is on Arbitrum)
+    const multi = filterAndSortPools(pools, { ...defaultFilters, searchQuery: "usdc ethereum" }, defaultSort);
+    expect(multi.map(p => p.pool).sort()).toEqual(["a", "b"]);
+
+    // A word absent everywhere → no results (AND semantics, not OR)
+    const none = filterAndSortPools(pools, { ...defaultFilters, searchQuery: "arbitrum solana" }, defaultSort);
+    expect(none).toEqual([]);
+  });
+
   it("caps results at 200", () => {
     const many = Array.from({ length: 250 }, (_, i) => makeScoredPool({ pool: `p${i}`, riskAdjustedScore: i }));
     const result = filterAndSortPools(many, defaultFilters, defaultSort);

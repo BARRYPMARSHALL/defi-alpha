@@ -94,6 +94,10 @@ export function EmailCapture({
       </form>
 
       {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        One email a week, no spam. Unsubscribe anytime.
+      </p>
     </div>
   );
 }

@@ -101,9 +101,12 @@ export function filterAndSortPools(
     }
 
     if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      const searchable = `${p.project} ${p.symbol} ${p.chain}`.toLowerCase();
-      if (!searchable.includes(query)) return false;
+      const query = filters.searchQuery.toLowerCase().trim();
+      const searchable = `${p.project} ${p.symbol} ${p.chain} ${p.ilRisk}`.toLowerCase();
+      // Multi-word: EVERY word must appear ("usdc ethereum" → pools on
+      // Ethereum containing USDC). Single word behaves exactly as before.
+      const words = query.split(/\s+/).filter(Boolean);
+      if (!words.every((word) => searchable.includes(word))) return false;
     }
 
     return true;

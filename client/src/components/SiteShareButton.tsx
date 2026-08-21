@@ -64,8 +64,15 @@ export function SiteShareButton({ text = SHARE_TEXT, compact = false }: SiteShar
     { name: "Reddit", href: `https://reddit.com/submit?url=${encodedUrl}&title=${encodeURIComponent("DeFi Alpha")}`, icon: SiReddit },
     { name: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, icon: SiFacebook },
     { name: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`, icon: FaLinkedin },
-    { name: "Discord", href: `https://discord.com/channels/@me`, icon: SiDiscord },
+    // Discord has no web share intent — this item copies the link instead
+    { name: "Discord", href: "", copy: true, icon: SiDiscord },
   ];
+
+  /** Discord: copy the link so the user can paste it into a server. */
+  const copyForDiscord = async () => {
+    await copyLink();
+    toast({ title: "Link copied", description: "Paste it in your Discord server." });
+  };
 
   return (
     <DropdownMenu>
@@ -85,14 +92,21 @@ export function SiteShareButton({ text = SHARE_TEXT, compact = false }: SiteShar
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Share DeFi Alpha</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {links.map(({ name, href, icon: Icon }) => (
-          <DropdownMenuItem key={name} asChild className="gap-2 cursor-pointer">
-            <a href={href} target="_blank" rel="noopener noreferrer">
+        {links.map(({ name, href, copy, icon: Icon }) =>
+          copy ? (
+            <DropdownMenuItem key={name} onClick={copyForDiscord} className="gap-2 cursor-pointer">
               <Icon className="h-4 w-4" />
-              {name}
-            </a>
-          </DropdownMenuItem>
-        ))}
+              {name} (copy link)
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem key={name} asChild className="gap-2 cursor-pointer">
+              <a href={href} target="_blank" rel="noopener noreferrer">
+                <Icon className="h-4 w-4" />
+                {name}
+              </a>
+            </DropdownMenuItem>
+          ),
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={copyLink} className="gap-2 cursor-pointer">
           {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Link2 className="h-4 w-4" />}

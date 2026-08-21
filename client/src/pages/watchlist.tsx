@@ -161,10 +161,10 @@ export default function WatchlistPage() {
           )
         ) : null}
 
-        {/* Pools that no longer resolve (delisted from DeFiLlama) */}
+        {/* Pools that no longer resolve, or beyond the display cap */}
         {!isLoading && watchlist.length > watchedPools.length && (
           <p className="mt-4 text-xs text-muted-foreground">
-            {watchlist.length - watchedPools.length} starred pool(s) no longer available.
+            {watchlist.length - watchedPools.length} starred pool(s) not shown (delisted or beyond the display limit).
           </p>
         )}
       </main>

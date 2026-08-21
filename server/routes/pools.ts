@@ -41,7 +41,17 @@ const queryParamsSchema = z.object({
   // starred pools render regardless of TVL/sort. Overrides all other filters.
   ids: z.string().optional().transform((val) => {
     if (!val) return [];
-    return val.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 100);
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const s of val.split(",")) {
+      const id = s.trim();
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        out.push(id);
+      }
+      if (out.length >= 200) break; // cap: watchlist realistically stays under this
+    }
+    return out;
   }),
 });
 
