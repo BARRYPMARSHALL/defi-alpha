@@ -102,7 +102,9 @@ export function registerCheckoutRoutes(app: Express) {
       const period = parseResult.data.period;
       const price = period === "annual" ? PRO_PRICE_ANNUAL_USD : PRO_PRICE_USD;
       const orderToken = crypto.randomUUID();
-      const orderId = `da-${user.id.slice(0, 8)}-${Date.now()}`;
+      // Random suffix prevents collision when two checkouts land in the same
+      // ms (a collision would silently overwrite the first order's token).
+      const orderId = `da-${user.id.slice(0, 8)}-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`;
 
       try {
         const base = process.env.SITE_URL || `http://${req.headers.host}`;

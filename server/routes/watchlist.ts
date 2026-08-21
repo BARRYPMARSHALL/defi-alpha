@@ -160,6 +160,16 @@ export function registerWatchlistRoutes(app: Express) {
     }
 
     try {
+      // Per-token cap so a token can't grow unbounded rows (matches the
+      // display cap; the client reconciles against this).
+      const WATCHLIST_MAX = 200;
+      const existing = await storage.getWatchlist(token);
+      if (existing.length >= WATCHLIST_MAX) {
+        return res.status(400).json({
+          success: false,
+          error: `Watchlist limit reached (${WATCHLIST_MAX} pools). Remove some to add more.`,
+        });
+      }
       await storage.addWatchlistItem({ token, poolId: parseResult.data.poolId });
       const watchlist = await storage.getWatchlist(token);
       res.json({ success: true, watchlist, synced: true });

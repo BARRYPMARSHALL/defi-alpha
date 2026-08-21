@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import { randomBytes } from "crypto";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer, type Server } from "http";
@@ -46,6 +47,17 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
 
   app.use(express.urlencoded({ extended: false }));
 
+  // Basic security headers. Deliberately NO CSP: the app loads Google Fonts,
+  // gtag, and CoinGate scripts — a restrictive CSP would break them and a
+  // permissive one is worse than none.
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    next();
+  });
+
   // Session middleware — powers auth. Memory store is fine for single-instance
   // Session middleware — powers auth. In-memory store for local dev; when
   // DATABASE_URL is set (production/Railway) sessions persist in Postgres
@@ -57,28 +69,34 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
       })
     : undefined;
 
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (!sessionSecret && process.env.NODE_ENV === "production") {
-    // Warn loudly but still boot: Railway currently runs without this var and
-    // a hard fail would take the site down. Sessions reset on every restart
-    // until Barry sets it — a correctness issue, not a crash.
+  // Session secret: in production, NEVER fall back to a hardcoded value
+  // (it's public in the repo → anyone could forge session cookies). If
+  // SESSION_SECRET is missing, generate a random one per boot: sessions
+  // won't survive restarts (same as today) but can't be forged.
+  const configuredSecret = process.env.SESSION_SECRET;
+  const sessionSecret =
+    configuredSecret ||
+    (process.env.NODE_ENV === "production" ? randomBytes(32).toString("hex") : "dev-only-change-me");
+  if (!configuredSecret && process.env.NODE_ENV === "production") {
     console.warn(
       "[SESSION] WARNING: SESSION_SECRET is not set in production. " +
-        "Sessions will not survive restarts. Add SESSION_SECRET to Railway env vars.",
+        "Using a random per-boot secret — sessions will not survive restarts. " +
+        "Add SESSION_SECRET to Railway env vars.",
     );
   }
 
   app.use(
     session({
       name: "defi-alpha.sid",
-      secret: process.env.SESSION_SECRET || "dev-only-change-me",
+      secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
       store: sessionStore,
       cookie: {
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production" && !!process.env.COOKIE_SECURE,
+        // Behind the Railway TLS proxy, always mark the cookie secure in prod
+        secure: process.env.NODE_ENV === "production",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       },
     }),
@@ -87,23 +105,13 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
   app.use((req, res, next) => {
     const start = Date.now();
     const path = req.path;
-    let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-    const originalResJson = res.json;
-    res.json = function (bodyJson, ...args) {
-      capturedJsonResponse = bodyJson;
-      return originalResJson.apply(res, [bodyJson, ...args]);
-    };
 
     res.on("finish", () => {
       const duration = Date.now() - start;
       if (path.startsWith("/api")) {
-        let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-        if (capturedJsonResponse) {
-          logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-        }
-
-        log(logLine);
+        // Log method/status/duration only — never response bodies (they
+        // contain chat messages, watchlists, emails).
+        log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
       }
     });
 

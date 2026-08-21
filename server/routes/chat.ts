@@ -160,9 +160,12 @@ export function registerChatRoutes(app: Express) {
       const { message, conversationId } = parseResult.data;
       const userId = req.session?.userId ?? null;
 
-      // Free-tier gate: enforce the daily AI message cap for non-Pro users
+      // Free-tier gate: enforce the daily AI message cap for non-Pro users.
+      // The slot is RESERVED synchronously (check + bump in the same tick) so
+      // concurrent requests can't all pass the check before any bump.
       const key = await usageKey(req, res);
       const isPro = await isProUser(req);
+      let newCount = -1;
       if (!isPro) {
         const used = getDailyCount(key);
         if (used >= FREE_DAILY_AI_LIMIT) {
@@ -173,6 +176,7 @@ export function registerChatRoutes(app: Express) {
             usage: { used, limit: FREE_DAILY_AI_LIMIT, isPro: false },
           });
         }
+        newCount = bumpUsage(key);
       }
 
       // Persist the user message (create a conversation on first message)
@@ -199,7 +203,7 @@ export function registerChatRoutes(app: Express) {
 
       await storage.addMessage({ conversationId: convId, role: "assistant", content: reply });
 
-      const newCount = isPro ? -1 : bumpUsage(key);
+      // Slot already reserved above for free users (atomic check+bump)
 
       res.json({
         success: true,
