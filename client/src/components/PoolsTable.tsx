@@ -533,6 +533,7 @@ export function PoolsTable({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="gap-0.5 px-1.5"
+                            aria-label={`Zap ${pool.symbol} via Beefy (auto-compound)`}
                           >
                             <RefreshCw className="h-3.5 w-3.5" />
                           </a>
