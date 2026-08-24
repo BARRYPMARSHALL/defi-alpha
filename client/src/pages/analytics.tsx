@@ -213,6 +213,7 @@ export default function Analytics() {
       return res.json();
     },
     staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000, // matches the footer claim "Auto-refreshes every 5 minutes"
   });
 
   const { data: stablecoinsData, isLoading: stablecoinsLoading } = useQuery<StablecoinsResponse>({
