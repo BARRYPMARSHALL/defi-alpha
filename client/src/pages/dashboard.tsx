@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X, SlidersHorizontal, ChevronDown, Brain, GraduationCap } from "lucide-react";
 import { Link } from "wouter";
@@ -101,6 +101,9 @@ export default function Dashboard() {
     loadFromStorage("homeSort", DEFAULT_SORT),
   );
   const [searchDraft, setSearchDraft] = useState("");
+  // Debounce searchQuery so typing doesn't fire a /api/pools request per
+  // keystroke (matches the FiltersBar debounce pattern).
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeQuick, setActiveQuick] = useState("all");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [courseNudgeDismissed, setCourseNudgeDismissed] = useState(
@@ -232,9 +235,13 @@ export default function Dashboard() {
           <Input
             value={searchDraft}
             onChange={(e) => {
-              setSearchDraft(e.target.value);
-              handleFiltersChange({ ...filters, searchQuery: e.target.value });
+              const value = e.target.value;
+              setSearchDraft(value);
               setActiveQuick("all");
+              if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+              searchDebounceRef.current = setTimeout(() => {
+                handleFiltersChange({ ...filters, searchQuery: value });
+              }, 350);
             }}
             placeholder="Search any pool, token, or chain… (e.g. USDC, Aave, Arbitrum)"
             className="pl-11 pr-10 h-12 text-base"
@@ -243,6 +250,7 @@ export default function Dashboard() {
           {searchDraft && (
             <button
               onClick={() => {
+                if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
                 setSearchDraft("");
                 handleFiltersChange({ ...filters, searchQuery: "" });
               }}
