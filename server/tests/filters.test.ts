@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   filterAndSortPools,
+  countMatchingPools,
   chainMatchesFilter,
   poolMatchesUserQuery,
   formatPoolForResponse,
@@ -108,6 +109,14 @@ describe("filterAndSortPools", () => {
     const many = Array.from({ length: 250 }, (_, i) => makeScoredPool({ pool: `p${i}`, riskAdjustedScore: i }));
     const result = filterAndSortPools(many, defaultFilters, defaultSort);
     expect(result.length).toBe(200);
+  });
+
+  it("countMatchingPools reports the true match count before the 200 cap", () => {
+    const many = Array.from({ length: 250 }, (_, i) => makeScoredPool({ pool: `p${i}`, riskAdjustedScore: i }));
+    // All 250 match default filters; only 200 are returned by the list
+    expect(countMatchingPools(many, defaultFilters)).toBe(250);
+    // Filters still apply to the count
+    expect(countMatchingPools(pools, { ...defaultFilters, minTvl: 5_000_000 })).toBe(2);
   });
 });
 

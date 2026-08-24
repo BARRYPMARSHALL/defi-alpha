@@ -12,6 +12,7 @@ import { registerHealthRoutes } from "./routes/health";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerCheckoutRoutes, sweepPendingOrders } from "./routes/checkout";
 import { registerLeadsRoutes, registerDigestRoutes, registerEmailRoutes } from "./routes/leads";
+import { registerPushRoutes } from "./routes/push";
 import { sweepRateLimitBuckets } from "./lib/rate-limit";
 
 /** Weekly digest job: sends every DIGEST_DAY (0=Sunday, default 0) at 09:00 UTC. */
@@ -60,6 +61,7 @@ export async function registerRoutes(
   registerTwitterRoutes(app);
   registerChatRoutes(app);
   registerWatchlistRoutes(app);
+  registerPushRoutes(app);
 
   // Optional scheduled Twitter posting (TWITTER_AUTO_POST=true)
   maybeStartDailySchedule(async () => {

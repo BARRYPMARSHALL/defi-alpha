@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWatchlist } from "@/hooks/use-watchlist";
+import { PushToggle } from "@/components/PushToggle";
 import type { PoolsResponse, SortState } from "@shared/schema";
 
 interface WatchAlert {
@@ -79,8 +80,14 @@ export default function WatchlistPage() {
     refetchInterval: 60_000,
   });
 
-  // Server returns the pools in watchlist order
-  const watchedPools = data?.pools || [];
+  // Server returns the pools in watchlist order; the sort headers re-sort
+  // them client-side (the server's ids lookup ignores sort params).
+  const watchedPools = (data?.pools || []).slice().sort((a, b) => {
+    const dir = sort.direction === "asc" ? 1 : -1;
+    const aVal = a[sort.field] ?? 0;
+    const bVal = b[sort.field] ?? 0;
+    return (aVal < bVal ? -1 : aVal > bVal ? 1 : 0) * dir;
+  });
   const serverAlerts = alertData?.alerts || [];
   // Server alerts take precedence once present; session-dismissed ones are
   // filtered out. Local `alerts` is the offline/fallback source.
@@ -104,6 +111,9 @@ export default function WatchlistPage() {
             ? `${watchlist.length} starred pool${watchlist.length === 1 ? "" : "s"} — tap ★ to remove`
             : "Star pools from the search page to track them here"}
         </p>
+
+        {/* Push notifications — self-hides when unsupported/unconfigured */}
+        <PushToggle />
 
         {/* Alerts */}
         {currentAlerts.length > 0 && (

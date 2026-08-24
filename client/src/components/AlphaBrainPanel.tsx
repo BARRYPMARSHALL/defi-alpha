@@ -156,11 +156,11 @@ export function AlphaBrainPanel() {
             <p className="text-muted-foreground mt-1">
               You've used your free AI messages for today. Upgrade to Pro for unlimited Alpha Brain.
             </p>
-            <Link href="/checkout">
-              <Button size="sm" className="mt-2 w-full" variant="default">
+            <Button asChild size="sm" className="mt-2 w-full" variant="default">
+              <Link href="/checkout">
                 <Crown className="h-3.5 w-3.5 mr-1" /> Go Pro — $12/mo
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         )}
 
@@ -184,7 +184,12 @@ export function AlphaBrainPanel() {
             className="min-h-10 flex-1 resize-none"
             rows={1}
           />
-          <Button onClick={() => sendMessage(input)} disabled={loading || !input.trim()} size="icon">
+          <Button
+            onClick={() => sendMessage(input)}
+            disabled={loading || !input.trim()}
+            size="icon"
+            aria-label="Send message"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>

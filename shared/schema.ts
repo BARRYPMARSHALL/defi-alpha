@@ -103,6 +103,24 @@ export const pendingOrders = pgTable("pending_orders", {
 export type PendingOrder = typeof pendingOrders.$inferSelect;
 export type InsertPendingOrder = typeof pendingOrders.$inferInsert;
 
+// Web push subscriptions (browser notifications). Keyed by the browser's
+// unique subscription endpoint; `token` is the anonymous client token so a
+// device's subscriptions stay attached to its watchlist. userId is set when
+// the user is logged in (future: per-account notification settings).
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  endpoint: text("endpoint").notNull().unique(),
+  // JSON blob of the PushSubscription keys ({ p256dh, auth }) as sent by the
+  // browser — opaque to us, required verbatim when sending a notification.
+  keys: text("keys").notNull(),
+  token: text("token").notNull(),
+  userId: varchar("user_id"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+
 // DeFi Pool types from DeFiLlama API
 export interface Pool {
   pool: string;
@@ -155,6 +173,8 @@ export interface SortState {
 
 export interface PoolsResponse {
   pools: PoolWithScore[];
+  /** Total pools matching the query (before the 200-row display cap). */
+  total: number;
   stats: {
     totalPools: number;
     avgApy: number;

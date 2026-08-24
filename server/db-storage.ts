@@ -8,6 +8,7 @@ import {
   watchlistItems,
   leads,
   pendingOrders,
+  pushSubscriptions,
   type User,
   type InsertUser,
   type Conversation,
@@ -19,6 +20,8 @@ import {
   type Lead,
   type PendingOrder,
   type InsertPendingOrder,
+  type PushSubscriptionRow,
+  type InsertPushSubscription,
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 
@@ -215,6 +218,39 @@ export class DbStorage implements IStorage {
       .delete(pendingOrders)
       .where(eq(pendingOrders.orderId, orderId))
       .returning({ orderId: pendingOrders.orderId });
+    return rows.length > 0;
+  }
+
+  // ── web push subscriptions ───────────────────────────────────────────
+
+  async savePushSubscription(insert: InsertPushSubscription): Promise<PushSubscriptionRow> {
+    // Upsert by endpoint: re-subscribing (or the browser rotating keys on the
+    // same endpoint) must replace the old row, not duplicate it.
+    const rows = await this.db
+      .insert(pushSubscriptions)
+      .values({
+        endpoint: insert.endpoint,
+        keys: insert.keys,
+        token: insert.token,
+        userId: insert.userId ?? null,
+      })
+      .onConflictDoUpdate({
+        target: pushSubscriptions.endpoint,
+        set: { keys: insert.keys, token: insert.token, userId: insert.userId ?? null },
+      })
+      .returning();
+    return rows[0];
+  }
+
+  async listPushSubscriptions(): Promise<PushSubscriptionRow[]> {
+    return this.db.select().from(pushSubscriptions);
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<boolean> {
+    const rows = await this.db
+      .delete(pushSubscriptions)
+      .where(eq(pushSubscriptions.endpoint, endpoint))
+      .returning({ endpoint: pushSubscriptions.endpoint });
     return rows.length > 0;
   }
 }

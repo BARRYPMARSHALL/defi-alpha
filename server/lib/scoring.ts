@@ -277,11 +277,15 @@ export function transformPool(raw: any): TransformedPoolData {
 }
 
 export function scorePools(rawPools: any[]): PoolWithScore[] {
+  // Index raw pools by id once — the old code did a linear find per pool
+  // (O(n²) ≈ 100M+ comparisons every 2-min fetch on ~16k pools).
+  const rawById = new Map(rawPools.map((p: any) => [p.pool, p]));
+
   return rawPools
     .filter((p: any) => p.tvlUsd > 0 && p.apy !== null && p.apy >= 0)
     .map(transformPool)
     .map((data) => {
-      const rawPool = rawPools.find(r => r.pool === data.pool.pool) || data.pool;
+      const rawPool = rawById.get(data.pool.pool) || data.pool;
       const autoCompoundInfo = detectAutoCompound(rawPool);
       const baseScore = calculateRiskAdjustedScore(data.pool);
       const beefyBoost = autoCompoundInfo.isBeefy ? 1.15 : 1.0;

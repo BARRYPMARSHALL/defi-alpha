@@ -46,18 +46,18 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated, rightSlot
         </Link>
 
         <div className="flex items-center gap-1">
-          <Link href="/watchlist">
-            <Button variant="ghost" size="sm" data-testid="button-watchlist">
+          <Button variant="ghost" size="sm" asChild data-testid="button-watchlist">
+            <Link href="/watchlist">
               <Star className="h-4 w-4 mr-2" />
               Watchlist
-            </Button>
-          </Link>
-          <Link href="/more">
-            <Button variant="ghost" size="sm" data-testid="button-more">
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild data-testid="button-more">
+            <Link href="/more">
               <MoreHorizontal className="h-4 w-4 mr-2" />
               More
-            </Button>
-          </Link>
+            </Link>
+          </Button>
 
           {rightSlot}
 
@@ -114,6 +114,7 @@ export function Header({ onRefresh, isRefreshing = false, lastUpdated, rightSlot
                 onClick={onRefresh}
                 disabled={isRefreshing}
                 data-testid="button-refresh-mobile"
+                aria-label="Refresh"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
               </Button>

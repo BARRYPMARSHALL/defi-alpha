@@ -6,7 +6,7 @@ import {
   getCachedData,
   invalidatePoolsCache,
 } from "../lib/defillama";
-import { filterAndSortPools, CHAIN_ALIASES } from "../lib/filters";
+import { filterAndSortPools, countMatchingPools, CHAIN_ALIASES } from "../lib/filters";
 
 const sortStateSchema = z.object({
   field: z.enum(["riskAdjustedScore", "tvlUsd", "apy", "apyPct7D"]),
@@ -85,6 +85,7 @@ export function registerPoolsRoutes(app: Express) {
           .filter((p): p is NonNullable<typeof p> => Boolean(p));
         const response: PoolsResponse = {
           pools,
+          total: pools.length,
           stats: cachedData.stats,
           chains: cachedData.chains,
           chainDistribution: cachedData.chainDistribution,
@@ -111,6 +112,7 @@ export function registerPoolsRoutes(app: Express) {
 
       const response: PoolsResponse = {
         pools: filteredPools,
+        total: countMatchingPools(cachedData.pools, filters),
         stats: cachedData.stats,
         chains: cachedData.chains,
         chainDistribution: cachedData.chainDistribution,

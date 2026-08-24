@@ -286,9 +286,11 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">
             {isLoading
               ? "Loading pools…"
-              : `${visiblePools.length.toLocaleString()} pools${
-                  activeQuick === "watchlist" ? " watched" : ""
-                } · ${data?.chains.length || 0} chains`}
+              : activeQuick === "watchlist"
+                ? `${visiblePools.length.toLocaleString()} watched · ${data?.chains.length || 0} chains`
+                : data && data.total > visiblePools.length
+                  ? `showing ${visiblePools.length.toLocaleString()} of ${data.total.toLocaleString()} pools · ${data.chains.length} chains`
+                  : `${visiblePools.length.toLocaleString()} pools · ${data?.chains.length || 0} chains`}
           </p>
           <div className="flex items-center gap-2">
             {/* Sort dropdown */}

@@ -519,13 +519,18 @@ export default function Learn() {
                 <p className="text-sm mb-4">
                   DeFiLlama offers a free tool to check if your wallet is eligible for any claimable airdrops.
                 </p>
-                <a href="https://defillama.com/airdrops" target="_blank" rel="noopener noreferrer">
-                  <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-sm" size="sm" data-testid="button-defillama-airdrops">
+                <Button
+                  asChild
+                  className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-sm"
+                  size="sm"
+                  data-testid="button-defillama-airdrops"
+                >
+                  <a href="https://defillama.com/airdrops" target="_blank" rel="noopener noreferrer">
                     <Gift className="h-4 w-4 mr-2 shrink-0" />
                     <span className="truncate">Check Airdrops on DeFiLlama</span>
                     <ExternalLink className="h-4 w-4 ml-2 shrink-0" />
-                  </Button>
-                </a>
+                  </a>
+                </Button>
               </div>
 
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-5 mb-6">

@@ -9,6 +9,8 @@ import {
   type InsertWatchlistItem,
   type PendingOrder,
   type InsertPendingOrder,
+  type PushSubscriptionRow,
+  type InsertPushSubscription,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { DbStorage } from "./db-storage";
@@ -48,6 +50,11 @@ export interface IStorage {
   getPendingOrder(orderId: string): Promise<PendingOrder | undefined>;
   listPendingOrders(): Promise<PendingOrder[]>;
   deletePendingOrder(orderId: string): Promise<boolean>;
+
+  // web push subscriptions (browser notifications, keyed by endpoint)
+  savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscriptionRow>;
+  listPushSubscriptions(): Promise<PushSubscriptionRow[]>;
+  deletePushSubscription(endpoint: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -57,9 +64,11 @@ export class MemStorage implements IStorage {
   private messages: Map<number, Message>;
   private watchlist: Map<string, string[]>;
   private pendingOrders: Map<string, PendingOrder>;
+  private pushSubscriptions: Map<string, PushSubscriptionRow>;
   private nextConversationId: number;
   private nextMessageId: number;
   private nextWatchlistId: number;
+  private nextPushSubId: number;
 
   constructor() {
     this.users = new Map();
@@ -68,9 +77,11 @@ export class MemStorage implements IStorage {
     this.watchlist = new Map();
     this.leads = new Map();
     this.pendingOrders = new Map();
+    this.pushSubscriptions = new Map();
     this.nextConversationId = 1;
     this.nextMessageId = 1;
     this.nextWatchlistId = 1;
+    this.nextPushSubId = 1;
   }
 
   async addLead(email: string, source: string): Promise<Lead | "duplicate"> {
@@ -207,6 +218,29 @@ export class MemStorage implements IStorage {
 
   async deletePendingOrder(orderId: string): Promise<boolean> {
     return this.pendingOrders.delete(orderId);
+  }
+
+  // ── web push subscriptions ───────────────────────────────────────────
+
+  async savePushSubscription(insert: InsertPushSubscription): Promise<PushSubscriptionRow> {
+    const sub: PushSubscriptionRow = {
+      id: this.nextPushSubId++,
+      endpoint: insert.endpoint,
+      keys: insert.keys,
+      token: insert.token,
+      userId: insert.userId ?? null,
+      createdAt: insert.createdAt || new Date(),
+    };
+    this.pushSubscriptions.set(sub.endpoint, sub);
+    return sub;
+  }
+
+  async listPushSubscriptions(): Promise<PushSubscriptionRow[]> {
+    return Array.from(this.pushSubscriptions.values());
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<boolean> {
+    return this.pushSubscriptions.delete(endpoint);
   }
 }
 

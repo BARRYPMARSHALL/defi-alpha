@@ -317,8 +317,14 @@ export function PoolsTable({
                   <span className="truncate max-w-[130px]">{pool.project}</span>
                   {pool.isHot && (
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Flame className="h-4 w-4 text-orange-500" />
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Hot pool — high volume or rising APY"
+                          className="inline-flex cursor-help border-0 bg-transparent p-0"
+                        >
+                          <Flame className="h-4 w-4 text-orange-500" />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Hot pool - High volume or rising APY</p>
@@ -327,8 +333,14 @@ export function PoolsTable({
                   )}
                   {pool.apyDeclining && (
                     <Tooltip>
-                      <TooltipTrigger>
-                        <ArrowDown className="h-4 w-4 text-destructive" />
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="APY dropped more than 20% in the last 7 days"
+                          className="inline-flex cursor-help border-0 bg-transparent p-0"
+                        >
+                          <ArrowDown className="h-4 w-4 text-destructive" />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>APY dropped more than 20% in last 7 days</p>
@@ -337,8 +349,14 @@ export function PoolsTable({
                   )}
                   {pool.lowLiquidityRewards && (
                     <Tooltip>
-                      <TooltipTrigger>
-                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Reward tokens may have low liquidity"
+                          className="inline-flex cursor-help border-0 bg-transparent p-0"
+                        >
+                          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Reward tokens may have low liquidity</p>
@@ -466,6 +484,7 @@ export function PoolsTable({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="gap-0.5 px-1.5"
+                            aria-label={`Invest in ${pool.symbol}`}
                           >
                             <Zap className="h-3.5 w-3.5" />
                           </a>
@@ -489,6 +508,7 @@ export function PoolsTable({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="gap-0.5 px-1.5"
+                          aria-label={`View ${pool.symbol} on DeFiLlama`}
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
@@ -537,6 +557,7 @@ export function PoolsTable({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="gap-0.5 px-1.5"
+                            aria-label={`Zap into ${pool.symbol} (auto-compound)`}
                           >
                             <RefreshCw className="h-3.5 w-3.5" />
                           </a>
@@ -561,6 +582,7 @@ export function PoolsTable({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="gap-0.5 px-1.5"
+                            aria-label={`Check Beefy vault for ${pool.symbol}`}
                           >
                             <RefreshCw className="h-3.5 w-3.5" />
                           </a>

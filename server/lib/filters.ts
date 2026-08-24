@@ -62,55 +62,67 @@ export function poolMatchesUserQuery(pool: PoolWithScore, query: string): boolea
   return words.some(word => poolText.includes(word));
 }
 
+/** Shared filter predicate — used by the list endpoint AND the count. */
+export function matchesFilters(p: PoolWithScore, filters: FilterState): boolean {
+  if (p.tvlUsd < filters.minTvl) return false;
+
+  if (filters.chains.length > 0 && !filters.chains.includes(p.chain)) {
+    return false;
+  }
+
+  if (filters.projectTypes.length > 0) {
+    const isStable = p.stablecoin;
+    const isLending = p.project.toLowerCase().includes("lend") ||
+                     p.project.toLowerCase().includes("aave") ||
+                     p.project.toLowerCase().includes("compound");
+    const isLp = p.exposure === "multi";
+
+    const matches = filters.projectTypes.some((type) => {
+      switch (type) {
+        case "stable": return isStable;
+        case "lending": return isLending;
+        case "lp": return isLp;
+        case "volatile": return !isStable;
+        default: return true;
+      }
+    });
+
+    if (!matches) return false;
+  }
+
+  if (p.apy < filters.minApy) return false;
+
+  if (filters.lowIlOnly && p.ilRisk !== "none" && p.ilRisk !== "low") {
+    return false;
+  }
+
+  if (filters.searchQuery) {
+    const query = filters.searchQuery.toLowerCase().trim();
+    const searchable = `${p.project} ${p.symbol} ${p.chain} ${p.ilRisk}`.toLowerCase();
+    // Multi-word: EVERY word must appear ("usdc ethereum" → pools on
+    // Ethereum containing USDC). Single word behaves exactly as before.
+    const words = query.split(/\s+/).filter(Boolean);
+    if (!words.every((word) => searchable.includes(word))) return false;
+  }
+
+  return true;
+}
+
+/** How many pools match (before the 200-row display cap). */
+export function countMatchingPools(pools: PoolWithScore[], filters: FilterState): number {
+  let count = 0;
+  for (const p of pools) {
+    if (matchesFilters(p, filters)) count += 1;
+  }
+  return count;
+}
+
 export function filterAndSortPools(
   pools: PoolWithScore[],
   filters: FilterState,
   sort: SortState
 ): PoolWithScore[] {
-  let filtered = pools.filter((p) => {
-    if (p.tvlUsd < filters.minTvl) return false;
-
-    if (filters.chains.length > 0 && !filters.chains.includes(p.chain)) {
-      return false;
-    }
-
-    if (filters.projectTypes.length > 0) {
-      const isStable = p.stablecoin;
-      const isLending = p.project.toLowerCase().includes("lend") ||
-                       p.project.toLowerCase().includes("aave") ||
-                       p.project.toLowerCase().includes("compound");
-      const isLp = p.exposure === "multi";
-
-      const matches = filters.projectTypes.some((type) => {
-        switch (type) {
-          case "stable": return isStable;
-          case "lending": return isLending;
-          case "lp": return isLp;
-          case "volatile": return !isStable;
-          default: return true;
-        }
-      });
-
-      if (!matches) return false;
-    }
-
-    if (p.apy < filters.minApy) return false;
-
-    if (filters.lowIlOnly && p.ilRisk !== "none" && p.ilRisk !== "low") {
-      return false;
-    }
-
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase().trim();
-      const searchable = `${p.project} ${p.symbol} ${p.chain} ${p.ilRisk}`.toLowerCase();
-      // Multi-word: EVERY word must appear ("usdc ethereum" → pools on
-      // Ethereum containing USDC). Single word behaves exactly as before.
-      const words = query.split(/\s+/).filter(Boolean);
-      if (!words.every((word) => searchable.includes(word))) return false;
-    }
-
-    return true;
-  });
+  let filtered = pools.filter((p) => matchesFilters(p, filters));
 
   filtered.sort((a, b) => {
     let aVal: number;
