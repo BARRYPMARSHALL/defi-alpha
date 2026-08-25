@@ -1,6 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { fetchPoolsData, getCachedData } from "./lib/defillama";
+import { storage } from "./storage";
+import { isPushConfigured, sendPushToSubscriptions } from "./lib/push";
+import { collectWatchlistPushAlerts } from "./lib/watch-push";
 import { maybeStartDailySchedule } from "./lib/twitterBot";
 import { registerPoolsRoutes } from "./routes/pools";
 import { registerRecommendRoutes } from "./routes/recommend";
@@ -41,6 +44,56 @@ function startWeeklyDigestSchedule() {
   setInterval(check, 60 * 60 * 1000); // check hourly
 }
 
+/**
+ * Watchlist alert -> push scheduler. Every 5 minutes, diff every token that
+ * has push subscriptions against its alert baseline and push any significant
+ * APY moves. Only runs when VAPID keys are configured. Railway hobby tier
+ * sleeps between requests, so this only fires while the instance is awake —
+ * acceptable for an alert channel (the client's in-app poll still works
+ * regardless).
+ */
+function startWatchlistPushSchedule() {
+  if (!isPushConfigured()) {
+    console.log("Watchlist push schedule disabled (set VAPID keys to enable)");
+    return;
+  }
+  console.log("Watchlist push schedule enabled — checking every 5 minutes");
+
+  const run = async () => {
+    try {
+      const subs = await storage.listPushSubscriptions();
+      if (subs.length === 0) return;
+      const cached = getCachedData();
+      if (!cached) return;
+
+      const alertsByToken = await collectWatchlistPushAlerts(subs, cached.pools);
+      if (alertsByToken.size === 0) return;
+
+      const subsByToken = new Map<string, (typeof subs)[number][]>();
+      for (const sub of subs) {
+        const arr = subsByToken.get(sub.token) || [];
+        arr.push(sub);
+        subsByToken.set(sub.token, arr);
+      }
+
+      let pushed = 0;
+      for (const [token, payloads] of Array.from(alertsByToken)) {
+        const tokenSubs = subsByToken.get(token) || [];
+        for (const payload of payloads) {
+          const { sent } = await sendPushToSubscriptions(tokenSubs, payload);
+          pushed += sent;
+        }
+      }
+      if (pushed > 0) console.log(`[Push] Sent ${pushed} watchlist alert notifications`);
+    } catch (error) {
+      console.error("[Push] Watchlist alert cycle failed:", error);
+    }
+  };
+
+  run(); // once at boot to establish alert baselines
+  setInterval(run, 5 * 60 * 1000);
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express,
@@ -71,6 +124,9 @@ export async function registerRoutes(
 
   // Weekly digest email (RESEND_API_KEY + window)
   startWeeklyDigestSchedule();
+
+  // Watchlist APY alerts -> browser push (VAPID keys + subscriptions)
+  startWatchlistPushSchedule();
 
   // Housekeeping: sweep stale pending CoinGate orders + rate-limit buckets
   sweepPendingOrders().catch((error) => console.error("[Checkout] Initial order sweep failed:", error));

@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
 import { fetchPoolsData, getCachedData } from "../lib/defillama";
+import { buildAlerts, readBaseline } from "../lib/watch-alerts";
 
 const WATCHLIST_TOKEN_HEADER = "x-watchlist-token";
 
@@ -24,85 +25,9 @@ const addItemSchema = z.object({
  * The watchlist itself is the opt-in: we diff current APY against a stored
  * baseline and surface significant moves (default: >10% absolute change, or
  * >25% relative drop which signals decaying rewards).
+ * Alert math lives in server/lib/watch-alerts.ts (shared with the push
+ * scheduler); the /api/watchlist/alerts route serves the in-app cards.
  */
-interface Baseline {
-  [poolId: string]: { apy: number; at: string };
-}
-
-const baselines = new Map<string, Baseline>();
-const BASELINE_TTL_MS = 24 * 60 * 60 * 1000; // re-baseline daily
-
-function loadBaseline(token: string): Baseline {
-  return baselines.get(token) || {};
-}
-
-function saveBaseline(token: string, baseline: Baseline) {
-  baselines.set(token, baseline);
-}
-
-interface WatchAlert {
-  poolId: string;
-  symbol: string;
-  project: string;
-  chain: string;
-  previousApy: number;
-  currentApy: number;
-  changePct: number;
-  direction: "up" | "down";
-  message: string;
-}
-
-function buildAlerts(
-  token: string,
-  watchedIds: string[],
-  pools: { pool: string; symbol: string; project: string; chain: string; apy: number }[],
-): { alerts: WatchAlert[]; baseline: Baseline } {
-  const baseline = loadBaseline(token);
-  const poolById = new Map(pools.map((p) => [p.pool, p]));
-  const alerts: WatchAlert[] = [];
-  const now = new Date().toISOString();
-
-  for (const poolId of watchedIds) {
-    const pool = poolById.get(poolId);
-    if (!pool) continue;
-
-    const prev = baseline[poolId];
-    if (!prev || Date.parse(now) - Date.parse(prev.at) > BASELINE_TTL_MS) {
-      // First sighting (or stale baseline): just record, don't alert
-      baseline[poolId] = { apy: pool.apy, at: now };
-      continue;
-    }
-
-    const changePct = prev.apy > 0 ? ((pool.apy - prev.apy) / prev.apy) * 100 : 0;
-    const absChange = Math.abs(pool.apy - prev.apy);
-
-    const significant =
-      absChange >= 10 || changePct <= -25 || changePct >= 50;
-
-    if (significant && pool.apy !== prev.apy) {
-      alerts.push({
-        poolId,
-        symbol: pool.symbol,
-        project: pool.project,
-        chain: pool.chain,
-        previousApy: prev.apy,
-        currentApy: pool.apy,
-        changePct,
-        direction: pool.apy > prev.apy ? "up" : "down",
-        message:
-          pool.apy > prev.apy
-            ? `${pool.symbol} APY rose from ${prev.apy.toFixed(1)}% to ${pool.apy.toFixed(1)}%`
-            : `${pool.symbol} APY fell from ${prev.apy.toFixed(1)}% to ${pool.apy.toFixed(1)}%`,
-      });
-    }
-
-    // Always refresh the baseline so the next poll diffs against today
-    baseline[poolId] = { apy: pool.apy, at: now };
-  }
-
-  saveBaseline(token, baseline);
-  return { alerts, baseline };
-}
 
 export function registerWatchlistRoutes(app: Express) {
   app.get("/api/watchlist", async (req, res) => {
@@ -129,7 +54,7 @@ export function registerWatchlistRoutes(app: Express) {
     try {
       const watchlist = await storage.getWatchlist(token);
       if (watchlist.length === 0) {
-        return res.json({ success: true, alerts: [], baseline: loadBaseline(token) });
+        return res.json({ success: true, alerts: [], baseline: readBaseline(token) });
       }
       await fetchPoolsData();
       const cached = getCachedData();
